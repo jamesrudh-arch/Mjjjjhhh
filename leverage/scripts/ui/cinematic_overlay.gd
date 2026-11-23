@@ -27,8 +27,9 @@ func _ready() -> void:
         _build()
         EventBus.mission_started.connect(_on_mission_started)
         EventBus.dialogue_started.connect(func(_npc): set_letterbox(true))
-        EventBus.dialogue_ended.connect(func(): set_letterbox(false))
-        EventBus.cinematic_requested.connect(func(_beat): set_letterbox(true))
+        EventBus.dialogue_ended.connect(func(_npc_id): set_letterbox(false))
+        # cinematic beats are requested by the MissionSystem (story beats)
+        MissionSystem.cinematic_requested.connect(func(_beat): set_letterbox(true))
 
 
 func _build() -> void:

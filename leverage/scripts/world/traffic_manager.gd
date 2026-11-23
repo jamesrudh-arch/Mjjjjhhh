@@ -11,6 +11,9 @@ const AGENT_TYPES := [
         "res://assets/vehicles/taxi.glb",
 ]
 const KIND_NAMES := ["sedan", "hatch", "suv", "sport", "taxi"]
+const BIKE_GLB := "res://assets/vehicles/motorcycle.glb"
+const BIKE_CHANCE := 0.14                # share of spawns that are bikes (D6)
+const SEED_BIKES := 2                    # deterministic bikes present from first frame
 
 const ROADS := [
         {"id": "main_cross", "a": Vector2(-450, -10), "b": Vector2(450, -10)},
@@ -23,6 +26,7 @@ const ROADS := [
 var agents: Array = []
 var target_count := 14
 var _rng := RandomNumberGenerator.new()
+var _bikes_seeded := false
 
 
 func _ready() -> void:
@@ -35,6 +39,10 @@ func _process(_delta: float) -> void:
                 return
         # maintain population
         _prune_far(player)
+        if not _bikes_seeded:
+                _bikes_seeded = true
+                for i in SEED_BIKES:
+                        _spawn_near(player, true)
         if agents.size() < target_count:
                 _spawn_near(player)
 
@@ -51,9 +59,11 @@ func _prune_far(player: Node3D) -> void:
                                 agents.erase(a)
 
 
-func _spawn_near(player: Node3D) -> void:
-        # pick a road point ~90-140 m from player
+func _spawn_near(player: Node3D, force_bike := false) -> void:
+        # pick a road point ~90-140 m from player (seeded bikes use the nearest road)
         var road: Dictionary = ROADS[_rng.randi_range(0, ROADS.size() - 1)]
+        if force_bike:
+                road = _nearest_road(Vector2(player.global_position.x, player.global_position.z))
         var a: Vector2 = road["a"]
         var b: Vector2 = road["b"]
         var dir := (b - a).normalized()
@@ -63,12 +73,28 @@ func _spawn_near(player: Node3D) -> void:
         var side: float = 4.0 if _rng.randf() < 0.5 else -4.0
         var pp := player.global_position
         var d: float = Vector2(pp.x, pp.z).distance_to(p)
-        if d < 60.0 or d > 170.0:
+        if force_bike:
+                # walk the road to the point closest to ~95 m from the player
+                var best_p := p
+                var best_d := absf(d - 95.0)
+                for s in 13:
+                        var q: Vector2 = a + dir * (float(s) / 12.0) * length
+                        var dq: float = absf(Vector2(pp.x, pp.z).distance_to(q) - 95.0)
+                        if dq < best_d:
+                                best_d = dq
+                                best_p = q
+                p = best_p
+                d = Vector2(pp.x, pp.z).distance_to(p)
+        elif d < 60.0 or d > 170.0:
                 return
-        var idx := _rng.randi_range(0, AGENT_TYPES.size() - 1)
         var agent := TrafficAgent.new()
-        agent.car_glb = AGENT_TYPES[idx]
-        agent.vehicle_kind = KIND_NAMES[idx]
+        if force_bike or _rng.randf() < BIKE_CHANCE:
+                agent.car_glb = BIKE_GLB
+                agent.vehicle_kind = "motorcycle"
+        else:
+                var idx := _rng.randi_range(0, AGENT_TYPES.size() - 1)
+                agent.car_glb = AGENT_TYPES[idx]
+                agent.vehicle_kind = KIND_NAMES[idx]
         agent.position = Vector3(p.x + side, 0, p.y + side * 0.5)
         agent.set_meta("road_id", road["id"])
         var lane: Array = TrafficAgent.make_route_for_road(road, side)
@@ -76,9 +102,26 @@ func _spawn_near(player: Node3D) -> void:
         agent.route_idx = 0
         add_child(agent)
         agents.append(agent)
-        # visual tint
-        if agent.visual:
-                var mi := agent.visual.find_child("*MeshInstance*", true, false)
+
+
+func _nearest_road(pos2: Vector2) -> Dictionary:
+        var best: Dictionary = ROADS[0]
+        var best_d := INF
+        for r in ROADS:
+                var cp := _closest_point_on_segment(pos2, r["a"], r["b"])
+                var dq: float = pos2.distance_to(cp)
+                if dq < best_d:
+                        best_d = dq
+                        best = r
+        return best
+
+
+static func _closest_point_on_segment(p: Vector2, a: Vector2, b: Vector2) -> Vector2:
+        var ab := b - a
+        if ab.length_squared() < 0.0001:
+                return a
+        var tt: float = clampf((p - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+        return a + ab * tt
 
 
 func agent_by_proximity(pos: Vector3, radius := 3.0) -> TrafficAgent:

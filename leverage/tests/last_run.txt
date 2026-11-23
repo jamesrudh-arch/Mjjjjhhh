@@ -1,4 +1,4 @@
-checks=257
+checks=288
 failed=0
 boot.autoloads|PASS|EventBus autoload
 boot.autoloads|PASS|GameState autoload
@@ -24,6 +24,13 @@ intro.cinematic|PASS|intro subtitle shows
 intro.cinematic|PASS|intro beat count
 intro.cinematic|PASS|intro tutorial steps
 intro.cinematic|PASS|intro finishes cleanly
+presentation.cinematic|PASS|letterbox opens on dialogue
+presentation.cinematic|PASS|letterbox closes after dialogue
+presentation.cinematic|PASS|mission title card fades in
+presentation.cinematic|PASS|fade_out darkens screen
+presentation.cinematic|PASS|fade_in clears screen
+presentation.cinematic|PASS|state fade starts black on world entry
+presentation.cinematic|PASS|state fade clears to gameplay
 combat.disciplines|PASS|discipline brawler defined
 combat.disciplines|PASS|brawler has idle
 combat.disciplines|PASS|brawler has dodge
@@ -194,8 +201,11 @@ vehicles.traffic|PASS|vehicle spawned
 vehicles.traffic|PASS|vehicle in groups
 vehicles.traffic|PASS|vehicle enter context
 vehicles.traffic|PASS|player hidden in vehicle
+vehicles.traffic|PASS|rider visible while driving (D5)
+vehicles.traffic|PASS|rider seated pose
 vehicles.traffic|PASS|vehicle exit restores context
 vehicles.traffic|PASS|player visible after exit
+vehicles.traffic|PASS|rider freed on exit
 vehicles.motorcycle|PASS|motorcycle spawned
 vehicles.motorcycle|PASS|motorcycle visual from authored GLB
 vehicles.motorcycle|PASS|motorcycle kind meta
@@ -205,12 +215,33 @@ vehicles.motorcycle|PASS|motorcycle lighter than cars
 vehicles.motorcycle|PASS|motorcycle stronger force
 vehicles.motorcycle|PASS|motorcycle roll locked (arcade upright)
 vehicles.motorcycle|PASS|motorcycle enter context
+vehicles.motorcycle|PASS|rider astride while riding (D5)
+vehicles.motorcycle|PASS|rider astride seat offset
 vehicles.motorcycle|PASS|motorcycle exit restores context
+vehicles.motorcycle|PASS|bike rider freed on exit
 vehicles.motorcycle|PASS|motorcycle lean clamp
 vehicles.motorcycle|PASS|parked motorcycles placed in world
+traffic.motorcycles|PASS|seeded bike agents present
+traffic.motorcycles|PASS|bike agent seats NPC rider
+traffic.motorcycles|PASS|bike agent rider in seated pose
+traffic.motorcycles|PASS|bike agent moves along route
+traffic.motorcycles|PASS|bike cruise speed profile
+traffic.motorcycles|PASS|bike brake profile tighter
+traffic.motorcycles|PASS|jacked traffic bike is Motorcycle
+traffic.motorcycles|PASS|jacked bike kept agent visual
+traffic.motorcycles|PASS|jack pulled NPC rider off
+traffic.motorcycles|PASS|jacked bike rideable (rider astride)
 traffic.sim|PASS|traffic agents moving (>=1)
 pedestrians.pool|PASS|pedestrians spawned
 pedestrians.pool|PASS|pedestrians animate
+world.interiors|PASS|seven interiors built
+world.interiors|PASS|street doors placed for all interiors
+world.interiors|PASS|room size recorded for safe spawn
+world.interiors|PASS|interior enter sets state
+world.interiors|PASS|player teleported to room
+world.interiors|PASS|spawn clear of wall
+world.interiors|PASS|interior exit restores street pos
+world.interiors|PASS|interior exit restores context
 police.units|PASS|police spawn on wanted
 world.events|PASS|event activates
 world.events|PASS|event area effects

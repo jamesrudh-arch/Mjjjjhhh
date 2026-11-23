@@ -258,6 +258,11 @@ func _on_interact() -> void:
                 _exit_interior()
                 return
         if player:
+                # street-side interior doors (amber glow markers) come first
+                var near: Node = player.find_nearest_interactable()
+                if near != null and near.has_meta("interior_id"):
+                        try_enter_interior(String(near.get_meta("interior_id")))
+                        return
                 player.try_interact()
 
 
@@ -301,7 +306,8 @@ func _on_enter_exit() -> void:
                 return
         var agent := traffic.agent_by_proximity(player.global_position, ENTER_RADIUS)
         if agent:
-                var body := VehiclePlayer.create_from_agent(agent, agent.vehicle_kind)
+                # kind-aware: jacking a traffic bike yields a real Motorcycle body
+                var body: VehiclePlayer = VehiclePlayer.create_from_agent(agent, agent.vehicle_kind)
                 add_child(body)
                 traffic.agents.erase(agent)
                 body.enter(player)
@@ -706,8 +712,10 @@ func _enter_interior(interior_id: String) -> void:
                 _current_interior = interior_id
                 var room: Node3D = _interiors[interior_id]
                 _street_pos = player.global_position
-                player.global_position = room.position + Vector3(0, 0.2, room.position.distance_to(Vector3.ZERO) * 0.0 + 4.0)
-                player.global_position = Vector3(room.position.x, 0.2, room.position.z + 4.0)
+                # spawn just inside the room, clear of the wall and the entry door
+                var room_size: float = float(room.get_meta("room_size", 10.0))
+                player.global_position = Vector3(room.position.x, 0.2,
+                        room.position.z + room_size * 0.5 - 1.6)
                 InputRouter.set_context(InputRouter.Context.INTERIOR)
                 EventBus.ambience_area_changed.emit("interior")
                 EventBus.notification_posted.emit("Entered: " + interior_id.capitalize(), "area")

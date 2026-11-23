@@ -107,3 +107,64 @@
 - 257/257 in project dir AND from the 46.1 MB PCK (TDL #26 discipline).
 - Fresh Mobile-renderer (lavapipe Vulkan) render-probe frames VLM-verified:
   characters fully textured, billboard clean, no regressions.
+
+## v2.3.0 — All-Recommendations Pass: Rider, Bike Traffic, Interiors, Fades (session 7, 2026-11-23)
+
+### Rider is visible while driving (D5 closed)
+- `VehiclePlayer.enter()` spawns a seated rider stand-in from the player's OWN
+  character body (CharacterFactory), parented to the vehicle at a per-class
+  `seat_offset()` (car LHD y=0.20 tuned by VLM A/B of three candidates; bike
+  astride y=0.52), `Sitting_Idle` pose, forward-facing. Freed on exit; the real
+  player controller is untouched.
+- Traffic motorcycles seat an NPC rider (child of the visual) so AI bikes are
+  not ghost bikes; jacking pulls the rider off (freed) before the player rides.
+
+### Motorcycle AI traffic (D6 closed)
+- TrafficManager: 14% of agent spawns are bikes + 2 deterministic seeded bikes
+  near the player (nearest road, ~95 m, correct lane); bike agents use a
+  tighter brake profile (7 vs 9 m) and slightly higher cruise speed.
+- Jacking a traffic bike converts to a REAL `Motorcycle` physics body
+  (VehiclePlayer.create_from_agent dispatch; agent visual carried over).
+
+### Enterable interiors — the entry path existed but was unreachable (fixed)
+- NEW street-side door markers for all interiors: amber emissive glow
+  cylinders (unlit, mobile-cheap) at each anchor; interact enters the room.
+- Two new interiors (7 total): quickmart_store, pawn_backroom (authored props).
+- In-room spawn now respects room size (clear of the wall), replacing the
+  fixed +4.0 z that could drop the player inside a wall.
+
+### Menu→game presentation (D15 closed) + latent flow bug fixed
+- GameManager owns a persistent state-fade layer (CanvasLayer 60): the world
+  arrives through a 0.55 s fade-in from black (probe telemetry: alpha 1.0 →
+  0.46 → 0.0); MainMenu fades in from black on entry.
+- **The main menu was never freed on game start** (it stayed in the tree
+  covering the world — masked until now because the render probe freed it
+  manually and tests bypass the menu). _load_world now frees the outgoing
+  menu scene; motion probe proves `MENU FREED OK=true` through the real
+  NEW GAME button path.
+
+### New key art (D9 fixed)
+- menu_bg_0.png recomposed from a HUD-free DUSK world capture (time forced to
+  19:30, live incoming call declined, HUD/touch/banner hidden): upscale +
+  amber/teal neon-noir grade + bloom + vignette (`scripts/compose_keyart.py`).
+  Menu renders from the PCK verified (VLM PASS).
+
+### Fixes found on the way
+- v2.1.0 impact particles never spawned: `draw_pass` is not a CPUParticles3D
+  property → now `mesh` (+ canonical unshaded shading_mode).
+- v2.2.0 CinematicOverlay connected a nonexistent `EventBus.cinematic_requested`
+  (it lives on MissionSystem) and a 0-arity lambda to a 1-arg signal — both fixed.
+- Traffic test flake: background story calls can win the queue race in the
+  phone suite (drained deterministically now); jack tests restore player pos.
+- PCK no longer carries probe screenshots / docs (exclude_filter, render_out
+  cleaned + gitignored; evidence lives in docs/evidence/, outside the pack).
+
+### Validation
+- **288/288** in project dir AND from the shipped 45.6 MB PCK (31 new checks:
+  presentation.cinematic, traffic.motorcycles, world.interiors + rider checks).
+- Full real-flow Mobile-renderer (lavapipe) motion probe VLM-verified:
+  peds mid-stride/no T-pose (D13 closed), rider in-world, cars coherent at
+  gameplay distance, fade + menu-free telemetry, HUD-free dusk key art.
+- D16 recorded: single-frame VLM verdicts on dark glossy vehicle close-ups
+  oscillate; objective clay-silhouette solidity (0.838) + byte-identical
+  geometry vs v2.1.0 + old/new A/B equality prove no vehicle regression.

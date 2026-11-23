@@ -11,6 +11,9 @@ var state: int = State.BOOT
 var current_scene_id := "boot"
 var _autosave_timer := 0.0
 var _player_journey_log: Array = []   # recorded beats for test reports
+var _fade_layer: CanvasLayer = null  # persistent state-transition fade (D15)
+var _fade_rect: ColorRect = null
+var _fade_tween: Tween = null
 
 var world: Node = null
 
@@ -77,6 +80,12 @@ func continue_game(slot: int) -> bool:
 
 func _load_world(fresh: bool) -> void:
         current_scene_id = "world"
+        # Free the menu scene we are leaving (latent flow bug: the menu stayed in
+        # the tree covering the world; the menu->game transition is now explicit).
+        var cur := get_tree().current_scene
+        if cur != null and cur != world and cur is MainMenu:
+                cur.queue_free()
+                get_tree().current_scene = null
         # Release any existing world
         if world and is_instance_valid(world):
                 world.queue_free()
@@ -84,10 +93,14 @@ func _load_world(fresh: bool) -> void:
         if packed == null:
                 push_error("World scene missing: " + WORLD_SCENE)
                 return
+        # cinematic entry: world arrives through a fade-in from black (D15)
+        _ensure_fade_layer()
+        _fade_rect.color.a = 1.0
         world = packed.instantiate()
         world.name = "World"
         get_tree().root.add_child(world)
         go_to_state(State.PLAYING)
+        _fade_from_black(0.55)
         EventBus.game_started.emit(fresh)
         if fresh:
                 _start_intro_sequence()
@@ -104,6 +117,37 @@ func _start_intro_sequence() -> void:
         if world and world.has_method("play_opening_cinematic"):
                 world.play_opening_cinematic()
         _record_journey("intro_started", {})
+
+
+## ---------------- State-transition fade (D15) ----------------
+## GameManager owns a persistent overlay (autoload child, survives scene swaps)
+## so menu->world and world->menu transitions can fade through black.
+func _ensure_fade_layer() -> void:
+        if _fade_layer != null and is_instance_valid(_fade_layer):
+                return
+        _fade_layer = CanvasLayer.new()
+        _fade_layer.name = "StateFade"
+        _fade_layer.layer = 60
+        _fade_rect = ColorRect.new()
+        _fade_rect.color = Color(0, 0, 0, 0)
+        _fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+        _fade_layer.add_child(_fade_rect)
+        add_child(_fade_layer)
+
+
+func _fade_from_black(time := 0.55) -> void:
+        _ensure_fade_layer()
+        if _fade_tween != null and _fade_tween.is_valid():
+                _fade_tween.kill()
+        _fade_tween = _fade_layer.create_tween()
+        _fade_tween.tween_property(_fade_rect, "color:a", 0.0, time).set_ease(Tween.EASE_OUT)
+
+
+func fade_layer_alpha() -> float:
+        if _fade_rect == null:
+                return 0.0
+        return _fade_rect.color.a
 
 
 func return_to_menu() -> void:

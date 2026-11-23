@@ -14,6 +14,8 @@ var visual: Node3D
 var vehicle_kind := "sedan"
 var occupied := false
 var driver: Node3D = null
+var rider: Node3D = null                  # seated rider stand-in (D5)
+var rider_anim: AnimationPlayer = null
 var _steer := 0.0
 var _engine_loop: AudioStreamPlayer3D
 var _fuel_burn_t := 0.0
@@ -30,12 +32,27 @@ static func create(kind: String, glb: String, position: Vector3) -> VehiclePlaye
 
 
 static func create_from_agent(agent: TrafficAgent, kind: String) -> VehiclePlayer:
+        # Bikes convert to a real Motorcycle body (D6); cars to VehiclePlayer.
+        if kind == "motorcycle":
+                var m := Motorcycle.new()
+                m.vehicle_kind = "motorcycle"
+                m.position = agent.global_position
+                m.rotation = agent.global_rotation
+                if agent.visual != null:
+                        agent.remove_child(agent.visual)
+                        var rider: Node = agent.visual.get_node_or_null("AgentRider")
+                        if rider != null:
+                                rider.queue_free()      # the jack pulls the NPC off
+                        m.visual = agent.visual
+                agent.queue_free()
+                return m
         var v := VehiclePlayer.new()
         v.vehicle_kind = kind
         v.position = agent.global_position
         v.rotation = agent.global_rotation
         if agent.visual != null:
-                agent.visual.reparent(v)
+                # detach (not reparent): agent is freed and _ready re-attaches
+                agent.remove_child(agent.visual)
                 v.visual = agent.visual
         agent.queue_free()
         return v
@@ -56,7 +73,7 @@ func _ready() -> void:
         _add_wheel("FR", Vector3(0.85, 0.25, -1.4), true)
         _add_wheel("RL", Vector3(-0.85, 0.25, 1.5), false)
         _add_wheel("RR", Vector3(0.85, 0.25, 1.5), false)
-        if visual:
+        if visual and visual.get_parent() == null:
                 add_child(visual)
         add_to_group("vehicle")
         add_to_group("interactable")
@@ -115,6 +132,7 @@ func enter(player: PlayerController) -> void:
         player.visible = false
         GameState.in_vehicle = true
         InputRouter.set_context(InputRouter.Context.VEHICLE)
+        _spawn_rider()
         EventBus.player_entered_vehicle.emit(self)
         EventBus.sfx_requested.emit("sfx_car_door", global_position)
         if _engine_loop:
@@ -123,6 +141,7 @@ func enter(player: PlayerController) -> void:
 
 func exit_vehicle() -> void:
         occupied = false
+        _clear_rider()
         var player := driver
         driver = null
         GameState.in_vehicle = false
@@ -135,6 +154,48 @@ func exit_vehicle() -> void:
         EventBus.sfx_requested.emit("sfx_car_door", global_position)
         if _engine_loop:
                 _engine_loop.stop()
+
+
+## ---------------- Seated rider (D5) ----------------
+## The player body is hidden on enter (physics stays on the vehicle); a rider
+## stand-in built from the SAME character body is seated in the vehicle so
+## the driver is visible in third person. Freed on exit; the real player
+## controller is untouched (no per-seat mount animation needed on it).
+func seat_offset() -> Vector3:
+        return Vector3(-0.42, 0.20, -0.12)        # car: LHD driver seat (tuned via VLM A/B)
+
+
+func seat_rotation() -> float:
+        return PI        # mannequin faces +Z; vehicle forward is -Z
+
+
+func _spawn_rider() -> void:
+        if rider != null:
+                return
+        rider = CharacterFactory.make_player()
+        add_child(rider)
+        rider.position = seat_offset()
+        rider.rotation.y = seat_rotation()
+        rider_anim = _find_first_anim(rider)
+        if rider_anim != null and rider_anim.has_animation("Sitting_Idle"):
+                rider_anim.play("Sitting_Idle")
+
+
+func _clear_rider() -> void:
+        if rider != null:
+                rider.queue_free()
+        rider = null
+        rider_anim = null
+
+
+static func _find_first_anim(node: Node) -> AnimationPlayer:
+        if node is AnimationPlayer:
+                return node
+        for c in node.get_children():
+                var r := _find_first_anim(c)
+                if r != null:
+                        return r
+        return null
 
 
 ## Body impacts reported by physics contacts (connected by world.gd).

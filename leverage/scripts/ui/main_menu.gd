@@ -13,9 +13,22 @@ var _settings_open := false
 func _ready() -> void:
         set_anchors_preset(Control.PRESET_FULL_RECT)
         _build()
+        _build_entry_fade()
         InputRouter.ui_blocking = true
         InputRouter.set_context(InputRouter.Context.MENU)
         EventBus.music_layer_requested.emit("menu")
+
+
+## Cinematic menu entry: fade in from black (boot->menu and world->menu).
+func _build_entry_fade() -> void:
+        var veil := ColorRect.new()
+        veil.name = "EntryFade"
+        veil.color = Color(0, 0, 0, 1)
+        veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        veil.set_anchors_preset(Control.PRESET_FULL_RECT)
+        add_child(veil)
+        var tw := create_tween()
+        tw.tween_property(veil, "color:a", 0.0, 0.4).set_ease(Tween.EASE_OUT)
 
 
 func _build() -> void:
@@ -90,7 +103,7 @@ func _add_menu_buttons() -> void:
         var cr := LvgTheme.make_button("CREDITS")
         cr.pressed.connect(func(): _show_credits())
         _v.add_child(cr)
-        var ver := LvgTheme.make_label("v1.0.0  |  D'YOUNGS GAMES  |  Mobile renderer, XOGOT-ready PCK", 20, LvgTheme.TEXT_DIM)
+        var ver := LvgTheme.make_label("v2.3.0  |  D'YOUNGS GAMES  |  Mobile renderer, XOGOT-ready PCK", 20, LvgTheme.TEXT_DIM)
         _v.add_child(ver)
 
 

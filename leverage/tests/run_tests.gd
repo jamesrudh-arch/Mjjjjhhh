@@ -70,6 +70,36 @@ func _ready() -> void:
         check("intro finishes cleanly", intro._finished)
         await get_tree().process_frame
 
+        # Suite 0e: cinematic presentation layer (letterbox / title cards / fades)
+        suite("presentation.cinematic")
+        var overlay: CinematicOverlay = load("res://scripts/ui/cinematic_overlay.gd").new()
+        get_tree().root.add_child(overlay)
+        await get_tree().process_frame
+        overlay.set_letterbox(true)
+        await get_tree().create_timer(0.6).timeout
+        check("letterbox opens on dialogue", overlay.is_letterboxed())
+        overlay.set_letterbox(false)
+        await get_tree().create_timer(0.6).timeout
+        check("letterbox closes after dialogue", not overlay.is_letterboxed())
+        overlay.show_title_card("CHAPTER 1", "TEST CARD", "test briefing")
+        await get_tree().create_timer(0.5).timeout
+        check("mission title card fades in", overlay._card.modulate.a > 0.9)
+        overlay.fade_out(0.05)
+        await get_tree().create_timer(0.2).timeout
+        check("fade_out darkens screen", overlay._fade.color.a > 0.9)
+        overlay.fade_in(0.05)
+        await get_tree().create_timer(0.2).timeout
+        check("fade_in clears screen", overlay._fade.color.a < 0.1)
+        # GameManager state-transition fade (D15: menu -> game entry)
+        GameManager._ensure_fade_layer()
+        GameManager._fade_rect.color.a = 1.0
+        GameManager._fade_from_black(0.2)
+        check("state fade starts black on world entry", GameManager.fade_layer_alpha() > 0.9)
+        await get_tree().create_timer(0.6).timeout
+        check("state fade clears to gameplay", GameManager.fade_layer_alpha() < 0.05)
+        overlay.queue_free()
+        await get_tree().process_frame
+
         # Suite 1: discipline data + animation coverage
         suite("combat.disciplines")
         var ap := _mannequin_anims()
@@ -167,7 +197,7 @@ func _ready() -> void:
         check("HUD exists", world.hud != null)
         check("touch controls exist", world.touch != null)
         check("city built", world.city != null)
-        check("interiors built", world._interiors.size() == 5)
+        check("interiors built", world._interiors.size() == 7)
         check("collectibles placed", _count_group(world, "collectible") >= 18)
         check("player spawn area old_quarter", CityDirector.current_area == "old_quarter")
         await get_tree().create_timer(2.0).timeout
@@ -283,10 +313,13 @@ func _ready() -> void:
         v.enter(world.player)
         check("vehicle enter context", InputRouter.context == InputRouter.Context.VEHICLE)
         check("player hidden in vehicle", not world.player.visible)
+        check("rider visible while driving (D5)", v.rider != null and is_instance_valid(v.rider))
+        check("rider seated pose", v.rider_anim != null and v.rider_anim.current_animation == "Sitting_Idle")
         v.exit_vehicle()
         await get_tree().process_frame
         check("vehicle exit restores context", InputRouter.context == InputRouter.Context.EXPLORE)
         check("player visible after exit", world.player.visible)
+        check("rider freed on exit", v.rider == null)
         v.queue_free()
 
         # Suite 11b: motorcycles (R13: cars AND motorcycles)
@@ -309,9 +342,12 @@ func _ready() -> void:
         check("motorcycle roll locked (arcade upright)", bool(st["roll_locked"]))
         bike.enter(world.player)
         check("motorcycle enter context", InputRouter.context == InputRouter.Context.VEHICLE)
+        check("rider astride while riding (D5)", bike.rider != null and is_instance_valid(bike.rider))
+        check("rider astride seat offset", bike.rider != null and bike.rider.position == bike.seat_offset())
         bike.exit_vehicle()
         await get_tree().process_frame
         check("motorcycle exit restores context", InputRouter.context == InputRouter.Context.EXPLORE)
+        check("bike rider freed on exit", bike.rider == null)
         check("motorcycle lean clamp", absf(float(bike._bike_stats()["max_lean"]) - 0.55) < 0.001)
         bike.queue_free()
         var parked_bikes := 0
@@ -320,8 +356,49 @@ func _ready() -> void:
                         parked_bikes += 1
         check("parked motorcycles placed in world", parked_bikes >= 2)
 
+        # Suite 11c: motorcycle TRAFFIC (D6 closed — bikes in the agent pool)
+        suite("traffic.motorcycles")
+        var player_pos_before_jack: Vector3 = world.player.global_position
+        var traffic_bikes := 0
+        for a in world.traffic.agents:
+                if is_instance_valid(a) and a.vehicle_kind == "motorcycle":
+                        traffic_bikes += 1
+        check("seeded bike agents present", traffic_bikes >= 1)
+        var ba := TrafficAgent.new()
+        ba.car_glb = "res://assets/vehicles/motorcycle.glb"
+        ba.vehicle_kind = "motorcycle"
+        ba.route = TrafficAgent.make_route_for_road(TrafficManager.ROADS[0], 4.0)
+        ba.route_idx = 0
+        ba.position = Vector3(-446.0, 0, -6.0)
+        world.traffic.add_child(ba)
+        await get_tree().process_frame
+        check("bike agent seats NPC rider", ba.visual != null and ba.visual.get_node_or_null("AgentRider") != null)
+        check("bike agent rider in seated pose", ba.visual.get_node_or_null("AgentRider") != null)
+        var ba_p0 := ba.global_position
+        await get_tree().create_timer(1.5).timeout
+        check("bike agent moves along route", ba.global_position.distance_to(ba_p0) > 0.5)
+        check("bike cruise speed profile", ba.cruise_speed() > TrafficAgent.SPEED)
+        check("bike brake profile tighter", ba.brake_dist() < TrafficAgent.BRAKE_DIST)
+        # jacking a traffic bike yields a real Motorcycle body
+        var jacked: VehiclePlayer = VehiclePlayer.create_from_agent(ba, "motorcycle")
+        world.add_child(jacked)
+        await get_tree().process_frame
+        check("jacked traffic bike is Motorcycle", jacked is Motorcycle)
+        check("jacked bike kept agent visual", jacked.visual != null)
+        var pulled_rider: Node = jacked.visual.get_node_or_null("AgentRider")
+        check("jack pulled NPC rider off", pulled_rider == null)
+        jacked.enter(world.player)
+        check("jacked bike rideable (rider astride)", jacked.rider != null and is_instance_valid(jacked.rider))
+        jacked.exit_vehicle()
+        await get_tree().process_frame
+        jacked.queue_free()
+        # restore player pos: exit_vehicle teleports beside the jacked bike,
+        # which would orphan the agent population near the previous spot
+        world.player.global_position = player_pos_before_jack
+
         # Suite 12: traffic sim tick
         suite("traffic.sim")
+        await get_tree().create_timer(1.0).timeout     # population settles near player
         var agent_pos := {}
         for a in world.traffic.agents:
                 if is_instance_valid(a):
@@ -338,6 +415,24 @@ func _ready() -> void:
         await get_tree().create_timer(2.0).timeout
         check("pedestrians spawned", world._pedestrians.size() > 0)
         check("pedestrians animate", true)
+
+        # Suite 13b: enterable interiors + street doors (city-life pass)
+        suite("world.interiors")
+        check("seven interiors built", world._interiors.size() == 7)
+        var street_doors := 0
+        for n in get_tree().get_nodes_in_group("interactable"):
+                if n.has_meta("interior_id"):
+                        street_doors += 1
+        check("street doors placed for all interiors", street_doors == 7)
+        var dez_room: Node3D = world._interiors["dez_apartment"]
+        check("room size recorded for safe spawn", float(dez_room.get_meta("room_size", 0.0)) == 8.0)
+        world.try_enter_interior("dez_apartment")
+        check("interior enter sets state", GameState.in_interior == "dez_apartment")
+        check("player teleported to room", world.player.global_position.x > 1500.0)
+        check("spawn clear of wall", absf(world.player.global_position.z - (dez_room.position.z + 8.0 * 0.5 - 1.6)) < 0.01)
+        world._exit_interior()
+        check("interior exit restores street pos", GameState.in_interior == "" and world.player.global_position.x < 1500.0)
+        check("interior exit restores context", InputRouter.context == InputRouter.Context.EXPLORE)
 
         # Suite 14: police units
         suite("police.units")
@@ -414,6 +509,13 @@ func _ready() -> void:
         suite("phone.system")
         var phone: PhoneSystem = world.get_phone()
         check("phone system exists", phone != null)
+        # drain live story-call state so the queue race is deterministic
+        if phone.is_ringing():
+                phone.decline()
+        if phone.state == PhoneSystem.State.ACTIVE:
+                phone.hang_up()
+        phone._queue.clear()
+        phone._cooldown_t = 0.0
         phone.schedule_call("rizzo", ["line 1", "line 2"], 0.0, "test_call_x", {})
         check("call scheduled", not phone._queue.is_empty())
         phone._try_next_in_queue()

@@ -82,9 +82,9 @@ static func _take_particle(root: Node) -> CPUParticles3D:
         mesh.size = Vector2(0.06, 0.06)
         var mat := StandardMaterial3D.new()
         mat.albedo_color = Color(0.9, 0.86, 0.78, 0.75)
-        mat.flags_unshaded = true
+        mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
         mesh.material = mat
-        p.draw_pass = mesh
+        p.mesh = mesh
         root.add_child.call_deferred(p)
         _impact_pool.append(p)
         return p

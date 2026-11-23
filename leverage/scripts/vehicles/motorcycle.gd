@@ -4,8 +4,9 @@ extends VehiclePlayer
 ## motorcycles). Same B-enter/B-exit contract as cars; distinct handling:
 ## lighter, quicker, rolls into corners. Roll is locked on the physics body
 ## (arcade upright stability) and expressed visually as a lean of the mesh.
-## Parked bikes are placed by World; traffic stays on four wheels by design
-## (traffic AI is optimised around car corridors - see TDL #14).
+## Since v2.3.0 motorcycles also appear as traffic agents (D6 closed) and
+## can be jacked straight into a Motorcycle physics body; the rider sits
+## astride and is visible while riding (D5 closed).
 
 const BIKE_ENGINE_FORCE := 135.0      # cars: 90
 const BIKE_STEER_RATIO := 1.18         # tighter than the car ratio
@@ -23,6 +24,11 @@ static func create_at(position: Vector3) -> Motorcycle:
         return m
 
 
+## Jacking a traffic motorcycle goes through VehiclePlayer.create_from_agent
+## (kind "motorcycle" dispatches to a real Motorcycle body; the seated NPC
+## rider is pulled off by the jack and the player rider spawns on enter()).
+
+
 func _ready() -> void:
         mass = 95.0
         # narrow chassis, centre of mass low
@@ -38,7 +44,7 @@ func _ready() -> void:
         # two wheels: front steers, rear drives
         _add_wheel("FT", Vector3(0, 0.34, -0.78), true)
         _add_wheel("RR", Vector3(0, 0.34, 0.78), false)
-        if visual:
+        if visual and visual.get_parent() == null:
                 add_child(visual)
         add_to_group("vehicle")
         add_to_group("interactable")
@@ -70,6 +76,11 @@ func visual_roll_to(target: float, delta: float) -> void:
         _lean = lerpf(_lean, target, clampf(6.0 * delta, 0.0, 1.0))
         if visual:
                 visual.rotation.z = _lean
+
+
+## Rider sits astride the saddle, hands to the bars (D5).
+func seat_offset() -> Vector3:
+        return Vector3(0, 0.52, 0.02)
 
 
 func _bike_stats() -> Dictionary:

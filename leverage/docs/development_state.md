@@ -4,7 +4,19 @@
 Project root: `leverage/` (single authoritative project — no backups, no duplicates).
 Status taxonomy: **Implemented** (code exists) / **Tested** (verified by automated headless run) / **Verified** (rendered and visually confirmed) / **Device-only** (requires iPhone + XOGOT hardware; never claimed from sandbox).
 
-Last updated: 2026-11-23 (session 6 — CINEMATIC + AUDIO + PCK DEDUP). **State: v2.2.0 — PCK 46.1 MB (-40%), presentation + city-life pass delivered.**
+Last updated: 2026-11-23 (session 7 — ALL-RECOMMENDATIONS PASS). **State: v2.3.0 — rider + bike traffic + enterable interiors + menu/game presentation; PCK 45.6 MB; 288/288.**
+
+## Session 7 — what shipped (all remaining approved recommendations)
+
+1. **D5 closed — rider visible while driving**: seated stand-in spawned from the player's own character body (`VehiclePlayer._spawn_rider`, per-class `seat_offset()`, Sitting_Idle, forward-facing), freed on exit. Car seat height tuned by VLM A/B of three candidates (y=0.20); bike astride y=0.52. Traffic motorcycles carry NPC riders; jacking pulls the rider off.
+2. **D6 closed — motorcycle AI traffic**: 14% of traffic spawns are bikes + 2 deterministic seeded bikes near the player (nearest road, correct lane); bike agents brake tighter (7 m) and cruise slightly faster; jacked traffic bikes convert to real Motorcycle physics bodies.
+3. **Interiors actually reachable now**: street-side amber glow door markers (interact → enter) for all 7 interiors (2 new: quickmart_store, pawn_backroom); in-room spawn respects room size (was a fixed offset that could drop the player inside a wall).
+4. **D15 closed + latent flow bug fixed**: GameManager state-fade layer (CanvasLayer 60) — world entry fades from black (telemetry 1.0→0.46→0.0), MainMenu entry fade; the main menu was NEVER freed on game start (it stayed in the tree over the world — masked by the old probe freeing it manually and tests bypassing the menu); `_load_world` now frees the outgoing menu; motion probe proves `MENU FREED OK=true` through the real NEW GAME path.
+5. **D9 fixed — new key art**: composed from a HUD-free dusk world capture (time forced to 19:30, live call declined, UI hidden) + neon-noir grade/bloom/vignette (`scripts/compose_keyart.py`); menu re-rendered FROM THE PACK under Forward Mobile (VLM PASS).
+6. **D13 closed**: in-motion Mobile-renderer frames VLM-verified — pedestrians mid-stride, arms bent, no T-pose across multiple captures.
+7. **Latent runtime errors fixed** (shipped silently in v2.1/v2.2): impact particles used a nonexistent `draw_pass` property (never spawned) → `mesh`; CinematicOverlay connected a nonexistent `EventBus.cinematic_requested` (lives on MissionSystem) + 0-arity lambda on a 1-arg signal.
+8. **PCK hygiene**: probe screenshots were riding in the PCK (9.6 MB); render_out now gitignored scratch, evidence in `docs/evidence/session7/` (git, excluded from pack), export `exclude_filter="docs/*"`. PCK 46.1→45.6 MB despite new features.
+9. **Validation**: 288/288 project + from-pack (31 new checks: presentation.cinematic, traffic.motorcycles, world.interiors, rider/jack checks); full real-flow motion probe under Forward Mobile/lavapipe (VLM-verified frames + objective telemetry). D16 recorded (VLM vehicle close-up oscillation; countered by clay-silhouette solidity 0.838 + byte-identity + A/B equality).
 
 ## Session 6 — what shipped
 
