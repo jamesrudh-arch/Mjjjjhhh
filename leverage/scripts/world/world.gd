@@ -14,6 +14,7 @@ var combat: CombatPlayer
 var weapons: WeaponSystem
 var traffic: TrafficManager
 var hud: Node
+var cinematic: Node
 var touch: Node
 var sun: DirectionalLight3D
 var env: WorldEnvironment
@@ -46,6 +47,9 @@ func _ready() -> void:
         hud = load("res://scripts/ui/hud.gd").new()
         hud.name = "HUD"
         add_child(hud)
+        cinematic = load("res://scripts/ui/cinematic_overlay.gd").new()
+        cinematic.name = "CinematicOverlay"
+        add_child(cinematic)
         touch = load("res://scripts/ui/touch_controls.gd").new()
         touch.name = "TouchControls"
         add_child(touch)

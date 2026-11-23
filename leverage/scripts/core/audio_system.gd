@@ -189,6 +189,78 @@ func set_ambience_for_area(area_id: String) -> void:
                 _ambience_player.play()
 
 
+# ---------------- Ambient one-shots (P1 city-life pass) ----------------
+# District + time-of-day weighted street sounds, played quietly on the
+# Ambience bus at randomized intervals. Skipped while combat/chase music is
+# active so fights stay readable.
+const AMBIENT_ONESHOTS := {
+        "old_quarter": {"day": {"sfx_birds": 3.0, "sfx_chatter": 3.0, "sfx_car_passby": 2.0, "sfx_wind_gust": 1.0},
+                        "night": {"sfx_distant_siren": 2.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0}},
+        "docklands": {"day": {"sfx_car_passby": 3.0, "sfx_distant_siren": 1.0, "sfx_chatter": 1.0, "sfx_wind_gust": 2.0},
+                      "night": {"sfx_distant_siren": 3.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0}},
+        "kestrel_district": {"day": {"sfx_chatter": 3.0, "sfx_car_passby": 3.0, "sfx_city_horn": 1.0},
+                             "night": {"sfx_city_horn": 2.0, "sfx_car_passby": 2.0, "sfx_chatter": 1.0}},
+        "neon_strip": {"day": {"sfx_chatter": 3.0, "sfx_city_horn": 2.0, "sfx_car_passby": 2.0},
+                       "night": {"sfx_chatter": 3.0, "sfx_city_horn": 2.0, "sfx_car_passby": 2.0, "sfx_distant_siren": 1.0}},
+        "ironworks": {"day": {"sfx_car_passby": 2.0, "sfx_wind_gust": 2.0, "sfx_city_horn": 1.0},
+                      "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0}},
+        "heights": {"day": {"sfx_birds": 3.0, "sfx_wind_gust": 2.0, "sfx_chatter": 1.0},
+                    "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0, "sfx_birds": 0.5}},
+        "interior": {"day": {"sfx_chatter": 2.0},
+                     "night": {"sfx_chatter": 1.0}},
+}
+const AMBIENT_MIN_GAP := 7.0
+const AMBIENT_MAX_GAP := 16.0
+
+var _amb_oneshot_player: AudioStreamPlayer
+var _amb_next_t := 8.0
+
+
+func _process(delta: float) -> void:
+        if not GameManager.is_playing():
+                return
+        if _current_mood == "combat" or _current_mood == "chase":
+                _amb_next_t = max(_amb_next_t, 4.0)     # hold off during fights
+                return
+        _amb_next_t -= delta
+        if _amb_next_t <= 0.0:
+                _amb_next_t = randf_range(AMBIENT_MIN_GAP, AMBIENT_MAX_GAP)
+                _play_ambient_oneshot()
+
+
+func _play_ambient_oneshot() -> void:
+        var area: String = _current_ambience.trim_prefix("amb_")
+        if not AMBIENT_ONESHOTS.has(area):
+                area = "old_quarter"
+        var tod: String = "night" if TimeWeather.is_night() else "day"
+        var table: Dictionary = AMBIENT_ONESHOTS[area].get(tod, {})
+        if table.is_empty():
+                return
+        var total := 0.0
+        for k in table:
+                total += float(table[k])
+        var pick: float = randf() * total
+        var chosen: String = ""
+        for k in table:
+                pick -= float(table[k])
+                if pick <= 0.0:
+                        chosen = String(k)
+                        break
+        if chosen == "":
+                return
+        var stream: AudioStream = _get_sfx(chosen)
+        if stream == null:
+                return
+        if _amb_oneshot_player == null:
+                _amb_oneshot_player = AudioStreamPlayer.new()
+                _amb_oneshot_player.bus = "Ambience"
+                add_child(_amb_oneshot_player)
+        # quiet, distant feel: random pan would need stereo panner; volume + variance is enough
+        _amb_oneshot_player.stream = stream
+        _amb_oneshot_player.volume_db = randf_range(-14.0, -7.0)
+        _amb_oneshot_player.play()
+
+
 # ---------------- SFX ----------------
 func play_sfx(sfx_id: String, volume_db: float = 0.0) -> void:
         var stream: AudioStream = _get_sfx(sfx_id)

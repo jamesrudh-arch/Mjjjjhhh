@@ -4,7 +4,15 @@
 Project root: `leverage/` (single authoritative project — no backups, no duplicates).
 Status taxonomy: **Implemented** (code exists) / **Tested** (verified by automated headless run) / **Verified** (rendered and visually confirmed) / **Device-only** (requires iPhone + XOGOT hardware; never claimed from sandbox).
 
-Last updated: 2026-11-23 (session 5 — COMBAT FEEL / "JUICE" PASS). **State: v2.1.0 — game feel upgraded, PCK re-exported and validated from-pack.**
+Last updated: 2026-11-23 (session 6 — CINEMATIC + AUDIO + PCK DEDUP). **State: v2.2.0 — PCK 46.1 MB (-40%), presentation + city-life pass delivered.**
+
+## Session 6 — what shipped
+
+1. **Cinematic overlay** (`scripts/ui/cinematic_overlay.gd`): letterbox on dialogue/story beats, mission title cards (CHAPTER n + briefing), fades; wired in world.gd.
+2. **Ambient one-shot audio**: 6 new synthesized sounds (horn/distant siren/chatter/birds/pass-by/wind) + district+day/night weighted scheduler in AudioSystem (7-16 s gaps, off during combat/chase).
+3. **PCK 77.5→46.1 MB**: GLB image externalization via `scripts/glb_edit.py` (28 chars 40.2→22.3 MB, 8 vehicles 10.2→2.2, props 3.5→0.5; shared hash-dedup texture dirs), 420 derived source PNGs moved out of res:// to `asset_sources/` (repo, not PCK).
+4. **D12 fixed**: authored billboard poster texture + flat maps (streak source removed).
+5. Validation: 257/257 project + from-PCK; fresh Mobile-renderer frames VLM-verified (no regressions, textures intact).
 
 ## Session 5 — what shipped (all in the authoritative project, no backups)
 

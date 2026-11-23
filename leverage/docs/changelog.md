@@ -74,3 +74,36 @@
   now re-established for v2-line exports).
 - Mobile (Vulkan) renderer path now exercised in sandbox via user-local Mesa lavapipe
   ICD (`tools/vulkan-deb/`, no root needed) — TDL #25. Fresh gameplay capture verified.
+
+## v2.2.0 — Cinematic Presentation + Living Audio + PCK Dedup (session 6, 2026-11-23)
+
+### Cinematic presentation (P3)
+- NEW `scripts/ui/cinematic_overlay.gd` (CanvasLayer 40, code-built): animated
+  letterbox bars on all dialogue + story beats, mission title cards (CHAPTER n
+  + title + briefing, sfx, brief letterbox flavor), full-screen fades.
+- Wired into world (world.cinematic), version footer bumped to 2.2.0.
+
+### Living audio (P1)
+- Six new synthesized one-shots (original DSP, `scripts/audio_ambient_gen.py`):
+  city horn (doppler), distant siren, street chatter, birds, car pass-by,
+  wind gust (.ogg).
+- AudioSystem ambient one-shot scheduler: district+day/night weighted table,
+  7-16 s randomized gaps, quiet distant mix, holds off during combat/chase.
+
+### PCK size: 77.5 MB -> 46.1 MB (-40%)
+- `scripts/glb_edit.py` GLB surgery: externalize embedded images to per-dir
+  `shared/` texture sets (content-hash dedup), compact BIN, remap accessors.
+  Applied to 28 character GLBs (40.2→22.3 MB + 0.9 MB shared), 8 vehicles
+  (10.2→2.2 + 1.0 shared), props (3.5→0.5 + 0.6 shared); interiors already lean.
+- 279 derived per-char PNGs (18.7 MB) + 96 vehicle + 45 prop source PNGs moved
+  OUT of res:// to repo `asset_sources/` (still versioned; not PCK baggage).
+- Godot external-image URI loading verified (textures intact post-surgery).
+
+### D12 fixed
+- Billboard streaks: authored 512x256 poster texture (clean blocks/lettering,
+  no fine noise) + flat neutral normal/metallic maps; billboard.glb 238 KB→9.7 KB.
+
+### Validation
+- 257/257 in project dir AND from the 46.1 MB PCK (TDL #26 discipline).
+- Fresh Mobile-renderer (lavapipe Vulkan) render-probe frames VLM-verified:
+  characters fully textured, billboard clean, no regressions.

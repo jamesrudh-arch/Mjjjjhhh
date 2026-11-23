@@ -25,3 +25,7 @@ Open defects. Each has status and the taxonomy — never mark a sandbox fix as d
 ## Session 5 entries
 - D12: One storefront billboard shows streaky/smeared vertical artifacts under the Mobile renderer (VLM single-frame review). Suspect UV/mip on one emissive sign texture; verify on device before rebuilding the texture.
 - D13: Single-frame VLM review reported one pedestrian near T-pose; all anims referenced by new idle-variety code verified present on the mannequin (57/57). Likely spawn-transition frame or VLM oscillation (D10) — re-check in motion on device.
+
+## Session 6 entries
+- D14: (resolves D12) Billboard streak artifact fixed at source (authored poster texture + flat maps). Minor dark-edge read at distance remains possible; check on device.
+- D15: Cinematic overlay fade used only for future state transitions; menu->game entry fade-in not yet wired to GameManager (title card + letterbox ARE live).
