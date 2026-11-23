@@ -1,4 +1,4 @@
-checks=238
+checks=257
 failed=0
 boot.autoloads|PASS|EventBus autoload
 boot.autoloads|PASS|GameState autoload
@@ -238,3 +238,22 @@ ui.touch|PASS|fixed mapping A=kick action
 ui.touch|PASS|fixed mapping B=dodge action
 input.router|PASS|router context enum
 input.router|PASS|context set
+phone.system|PASS|phone system exists
+phone.system|PASS|call scheduled
+phone.system|PASS|call rings
+phone.system|PASS|call active
+phone.system|PASS|call ends to idle
+phone.system|PASS|call log recorded
+phone.system|PASS|idempotent key blocks repeat
+phone.system|PASS|thread created
+phone.system|PASS|unread counted
+phone.system|PASS|thread read
+phone.system|PASS|call banner bound
+phone.system|PASS|decline path logs
+phone.system|PASS|declined call logged
+phone.system|PASS|back to idle after decline
+map.gps|PASS|map builds
+map.gps|PASS|route computed
+map.gps|PASS|route endpoints ordered
+map.gps|PASS|route follows road graph
+map.gps|PASS|second route multi-hop

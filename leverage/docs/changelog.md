@@ -23,3 +23,24 @@
 - **In-vehicle radio wired end-to-end (R23 closed)**: audit found station tuning changed only the HUD label; AudioSystem now loads the station loop, plays it in-vehicle, ducks mood music, retunes live, stops on exit (dedicated killable tween — stale fade-outs were the root cause found by the new failing test). 11-check suite `audio.radio`.
 - Docs brought to truth: test_reports (filled), requirements_traceability (statuses advanced with evidence), known_defects (D4/D5/D6), asset_register (motorcycle), control_map (motorcycle row), development_state rewritten to delivery state, delivery_report written.
 - Deliverable packaged to `download/` (project zip + PCK + report).
+
+## v2.0.0 — Total Visual Overhaul + Living Phone + GPS (session 4, 2026-11-23)
+
+### Rebuilt (visual)
+- PBR texture forge: 17 procedural texture sets (asphalt/markings, brick, concrete, pavement, fabrics, skin, foliage, metal, storefront).
+- 28 realistic authored human bodies (faces, hair, beards, layered clothing, distinct casts) skinned to the UAL rig; runtime mesh/skin swap in CharacterFactory v2; proximity skinning replaces envelope auto-weights.
+- 8 detailed vehicles (unified hull + region glass + wheel arch cutouts + detailed wheels/lights/grille/interior); motorcycle rebuilt.
+- 19 authored buildings (5 district styles, inset windows, doors, storefronts w/ emissive signs, roofs).
+- 13 authored street props (trees, streetlights, traffic lights, hydrant, bin, bench, bus stop, billboard, dumpster, barrier).
+- City v2: 28-road shared network, textured roads/curbs/sidewalks/crosswalks, per-district buildings, night window emission ramp, player-following streetlight omnis, parked cars (≤400), slot-probability furniture.
+- Cinematic environment: procedural sky, graded day/night, warm fog, ACES.
+- Menu key art (cinematic graded cityscape) + contact portrait set (16 rendered head shots).
+
+### Systems
+- PhoneSystem: real incoming calls (ringtone loop + banner + ANSWER/DECLINE + subtitles), missed/declined consequences, reschedule-once, per-contact threads with timestamps/unread/quick-replies, call log, outgoing calls + voicemail, story-driven scheduling (mission completion → next giver calls + texts). Persisted.
+- MapScreen v2: A* GPS routing over the road graph, location selection, route + HUD compass arrow + distance, zoom/pan, fog of war, live markers.
+- Road graph: 21 cross streets; ironworks/neon/heights island bugs fixed.
+- Tests: 238 → 257 checks (phone.system, map.gps suites). Campaign (13 missions) fully resolving.
+
+### Fixes
+- Animation name discovery (Godot glTF importer strips `_Loop`); Array.filter callback arity; menu/HUD tab-indentation parse errors; Blender session reuse (factory-reset breaks glTF addon); reimport-before-render discipline (stale import cache).

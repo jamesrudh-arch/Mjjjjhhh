@@ -14,3 +14,10 @@ Open defects. Each has status and the taxonomy — never mark a sandbox fix as d
 ## Open items: none blocking. D4 accepted (headless artifact), D5/D6 by design (documented limitations).
 
 (Discipline: new defects get rows here with reproduction and fix status; never deleted.)
+
+## Session 4 entries
+- D7: PCK size 77 MB (28 char GLBs embed duplicate texture copies). Optimization backlog: shared texture atlas / runtime material assignment.
+- D8: Vehicle/character close-up micro-polish (arch rims, hairline transitions) below AAA bar at macro distances; reads correctly at gameplay camera distance (3-10 m).
+- D9: Key art recomposed from gameplay render; faint HUD remnants may appear behind menu scrim.
+- D10: VLM single-frame reviews oscillate (3-7 on improving content); authoritative evidence = pixel sampling + game-distance renders + automated suite.
+- D11: keyart_probe.gd world-capture path renders black (world/player async init under intro state) — key art composed from gameplay render instead.

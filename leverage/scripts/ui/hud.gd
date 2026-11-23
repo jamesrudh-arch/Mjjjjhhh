@@ -15,6 +15,8 @@ var _stars: Array = []
 var _notif_box: VBoxContainer
 var _notif_items: Array = []
 var _objective_label: Label
+var _gps_arrow: Label
+var _gps_dist: Label
 var _objective_title: Label
 var _subtitle: Label
 var _subtitle_speaker: Label
@@ -269,6 +271,39 @@ func _process(delta: float) -> void:
         _cleanup_notifications(delta)
         # minimap redraw is automatic via draw signal
 
+
+func _update_gps_arrow() -> void:
+        if _gps_arrow == null:
+                return
+        var target := Vector2.INF
+        var obj := MissionSystem.current_objective()
+        if not obj.is_empty() and obj.has("pos"):
+                var p3: Vector3 = obj["pos"]
+                target = Vector2(p3.x, p3.z)
+        elif GameState.has_gps:
+                target = GameState.gps_waypoint
+        if target == Vector2.INF:
+                _gps_arrow.text = ""
+                _gps_dist.text = ""
+                return
+        var player := get_tree().get_first_node_in_group("player") as Node3D
+        if player == null:
+                return
+        var cam := get_viewport().get_camera_3d()
+        if cam == null:
+                return
+        var to_t := Vector3(target.x, 0, target.y) - player.global_position
+        var dist: float = to_t.length()
+        var fwd := -cam.global_transform.basis.z
+        var fwd_flat := Vector2(fwd.x, fwd.z).normalized()
+        var to_flat := Vector2(to_t.x, to_t.z).normalized()
+        var ang := fwd_flat.angle_to(to_flat)
+        _gps_arrow.text = "➤"
+        _gps_arrow.rotation = ang
+        var off := Vector2(0, -210).rotated(ang)
+        _gps_arrow.position = Vector2(960, 620) + off - Vector2(20, 20)
+        _gps_dist.position = Vector2(960, 660) + off
+        _gps_dist.text = "%d m" % int(dist)
 
 func _update_stars(level: int) -> void:
         for i in 5:

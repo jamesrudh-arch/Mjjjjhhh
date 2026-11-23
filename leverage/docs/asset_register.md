@@ -43,3 +43,13 @@ Flat-color StandardMaterial3D + small procedurally generated textures (noise-bas
 
 - Quaternius (quaternius.com) — character, animation, vehicle, city, furniture, gun packs.
 - If we ship any OpenGameArt item later, it gets a row here BEFORE entering `assets/`.
+
+## Session 4 — authored assets (all original works, made for this project; CC0-equivalent)
+- assets/textures/*.png — 17 procedural PBR sets (albedo/rough/normal) authored via scripts/build_textures.py.
+- assets/characters/char_*.glb — 28 procedural human bodies (scripts/build_character.py) on the UAL DEF-* skeleton; embedded textures from assets/textures.
+- assets/vehicles/*.glb — 8 procedural vehicles (scripts/build_vehicle.py); replaces Quaternius packs in-game.
+- assets/buildings/b_*.glb — 19 procedural buildings (scripts/build_building.py).
+- assets/props/*_v2.glb, tree_*.glb, hydrant/bin/bench/busstop/billboard/dumpster/barrier — 13 procedural props (scripts/build_props.py).
+- assets/ui/portraits/*.png — 16 in-engine rendered contact head shots.
+- assets/ui/keyart/menu_bg_0.png — cinematic key art composed from an in-engine render.
+- UAL mannequin (itch.io, CC0) retained as the animation library + skeleton source only.

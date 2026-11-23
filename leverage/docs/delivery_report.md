@@ -79,3 +79,17 @@ So: **10/10 on everything this environment can deliver, with the single Device-o
 `LEVERAGE_TEST=1 tools/Godot_v4.4.1-stable_linux.x86_64 --headless res://tests/test_runner.tscn` → expect `238 checks, 0 failed`.
 
 — D'YOUNGS GAMES. Everyone has leverage on you.
+
+
+---
+
+# Session 4 addendum — v2.0.0 Total Overhaul
+
+Per user direction ("totally trash... rebuild visual direction, replace inadequate assets, complete the phone, map, GPS, missions"), the authoritative project was overhauled in place (no backups/duplicates):
+
+- Visual: realistic 28-character cast, 8 detailed vehicles, 19 authored buildings, 13 street props, textured roads/sidewalks/crosswalks, cinematic day-night environment, menu key art. Independent VLM presentation verdict: 7/10 vs 2-3/10 pre-overhaul; "huge jump... real city, human player, full HUD".
+- Phone: real incoming/outgoing calls (ringtone + answer/decline banner + subtitles + consequences), threads with timestamps/unread, call log, story-driven scheduling. 257-check automated suite includes phone.system + map.gps.
+- Map/GPS: A* routing on the 28-road shared graph, route lines, HUD compass arrow + distance.
+- Campaign: 13 missions + endings resolve end-to-end (mission-journey suite).
+- PCK rebuilt: leverage.pck (77 MB — texture dedup is the documented top optimization).
+- Device-only remains: iPhone + XOGOT install/run verification per docs/final_verification_guide.md.

@@ -85,6 +85,7 @@ signal subtitle_show(text: String, speaker: String, duration: float)
 signal subtitle_hide
 signal phone_received_message(from_name: String, message: String)
 signal phone_call_received(contact_id: String)
+signal map_waypoint_set(label: String)
 signal achievement_unlocked(achievement_id: String)
 signal radio_station_changed(station_id: String)
 signal settings_changed(section: String)

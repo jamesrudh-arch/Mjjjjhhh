@@ -4,7 +4,7 @@ extends Node3D
 ## traffic, pedestrians, named NPC visuals, police units, environment,
 ## mission entities, HUD + touch UI, intro cinematic, save/load hooks.
 
-const PLAYER_SPAWN := Vector3(-230, 0.2, -140)   # Old Quarter, near Marisol's Bar
+const PLAYER_SPAWN := Vector3(-252, 0.2, -164)   # Old Quarter corner, curb-side
 const CLINIC_SPAWN := Vector3(-120, 0.2, 24)
 
 var city: CityBuilder
@@ -42,6 +42,7 @@ func _ready() -> void:
         traffic.name = "Traffic"
         add_child(traffic)
         _spawn_motorcycles()
+        _setup_phone()
         hud = load("res://scripts/ui/hud.gd").new()
         hud.name = "HUD"
         add_child(hud)
@@ -60,22 +61,33 @@ func _ready() -> void:
 func _build_environment() -> void:
         env = WorldEnvironment.new()
         var environment := Environment.new()
-        environment.background_mode = Environment.BG_COLOR
-        environment.background_color = Color("0a0b10")
-        environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-        environment.ambient_light_color = Color("3a3f4a")
-        environment.ambient_light_energy = 0.5
+        var sky := Sky.new()
+        var sky_mat := ProceduralSkyMaterial.new()
+        sky_mat.sky_top_color = Color("3f5a8c")
+        sky_mat.sky_horizon_color = Color("9db3c8")
+        sky_mat.ground_bottom_color = Color("2c2a26")
+        sky_mat.ground_horizon_color = Color("8a8873")
+        sky_mat.sun_angle_max = 30.0
+        sky_mat.sun_curve = 0.12
+        sky.sky_material = sky_mat
+        environment.sky = sky
+        environment.background_mode = Environment.BG_SKY
+        environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+        environment.ambient_light_energy = 0.75
         environment.fog_enabled = true
-        environment.fog_light_color = Color("22242a")
-        environment.fog_density = 0.006
-        environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+        environment.fog_light_color = Color("8fa0b0")
+        environment.fog_density = 0.0038
+        environment.fog_sky_affect = 0.35
+        environment.tonemap_mode = Environment.TONE_MAPPER_ACES
+        environment.tonemap_exposure = 1.06
         env.environment = environment
         add_child(env)
         sun = DirectionalLight3D.new()
         sun.rotation_degrees = Vector3(-52, 35, 0)
-        sun.light_color = Color("ffd9a8")
-        sun.light_energy = 1.1
+        sun.light_color = Color("ffe0b0")
+        sun.light_energy = 1.25
         sun.shadow_enabled = true
+        sun.shadow_bias = 0.06
         add_child(sun)
         # rain particles (hidden until rain)
         rain_particles = GPUParticles3D.new()
@@ -109,6 +121,19 @@ func _build_city() -> void:
         add_child(city)
         city.build(self)
         _interiors = city.build_interiors(self)
+        _collect_night_materials()
+
+func _collect_night_materials() -> void:
+        # building/shop window + sign materials with baked emission: ramp by night
+        for child in city.get_children():
+                if child is MultiMeshInstance3D and child.multimesh != null:
+                        var mesh: Mesh = child.multimesh.mesh
+                        if mesh == null:
+                                continue
+                        for si in mesh.get_surface_count():
+                                var mat := mesh.surface_get_material(si)
+                                if mat is StandardMaterial3D and mat.emission_enabled:
+                                        _night_materials.append({"mat": mat, "energy": mat.emission_energy_multiplier})
 
 
 func _spawn_player() -> void:
@@ -152,6 +177,31 @@ func play_opening_cinematic() -> void:
         _intro = load("res://scripts/story/intro_cinematic.gd").new()
         _intro.name = "IntroCinematic"
         add_child(_intro)
+
+# ---------------- phone ----------------
+var _phone: PhoneSystem
+var _call_banner: CallBanner
+
+func _setup_phone() -> void:
+        _phone = PhoneSystem.new()
+        _phone.name = "PhoneSystem"
+        _phone.add_to_group("phone_system")
+        add_child(_phone)
+        _call_banner = load("res://scripts/ui/call_banner.gd").new()
+        _call_banner.name = "CallBanner"
+        add_child(_call_banner)
+        _call_banner.bind_phone(_phone)
+        # story beat: the Tipster calls shortly after the intro ends.
+        _phone.schedule_call("the_tipster",
+                ["Carter. I know who has your brother.",
+                 "The Vetch crew took him for the ledger debt. I'll tell you where - when you've done something for this city.",
+                 "Check your messages. Start with the market. Rizzo's expecting you."],
+                22.0, "tipster_first",
+                {"message": "Vetch crew has Tommy. They want the ledger debt. Start with the market - Rizzo's expecting you.",
+                 "relationship": 4.0})
+
+func get_phone() -> PhoneSystem:
+        return _phone
 
 
 # ---------------- input wiring ----------------
@@ -387,7 +437,7 @@ func _spawn_motorcycles() -> void:
         # parked bikes (R13: cars AND motorcycles). Old Quarter curb by
         # Marisol's Bar + Neon Strip curb - free-roam rideables from minute one.
         for spec in [
-                {"pos": PLAYER_SPAWN + Vector3(5.5, 0.4, -3.5), "rot": 0.6},
+                {"pos": Vector3(-254.6, 0.05, -157), "rot": 0.0},
                 {"pos": Vector3(150, 0.4, 233), "rot": PI / 2.0},
         ]:
                 var m: Motorcycle = Motorcycle.create_at(spec["pos"])
@@ -501,21 +551,40 @@ func _update_day_night(delta: float) -> void:
         # sun rotation: dawn east, dusk west
         var day_t := h / 24.0
         sun.rotation_degrees = Vector3(-20.0 - (70.0 * sin(PI * clamp(day_t, 0.0, 1.0))), 35.0, 0.0)
-        sun.light_energy = lerp(1.15, 0.05, night_f)
-        sun.light_color = Color("ffd9a8").lerp(Color("3a4a8a"), night_f)
-        env.environment.ambient_light_energy = lerp(0.55, 0.22, night_f)
-        env.environment.fog_light_color = Color("22242a").lerp(Color("0d0e14"), night_f)
-        # street lamps near player at night
+        sun.light_energy = lerp(1.35, 0.04, night_f)
+        sun.light_color = Color("fff2d8").lerp(Color("40466e"), night_f)
+        var sky_mat := (env.environment.sky.sky_material as ProceduralSkyMaterial)
+        sky_mat.sky_top_color = Color("3f5a8c").lerp(Color("0a0d1a"), night_f)
+        sky_mat.sky_horizon_color = Color("9db3c8").lerp(Color("141827"), night_f)
+        sky_mat.ground_horizon_color = Color("8a8873").lerp(Color("101014"), night_f)
+        env.environment.ambient_light_energy = lerp(0.75, 0.16, night_f)
+        env.environment.fog_light_color = Color("8fa0b0").lerp(Color("0d0e14"), night_f)
+        # building window emission ramps up at night
+        for e in _night_materials:
+                var m: StandardMaterial3D = e["mat"]
+                m.emission_energy_multiplier = lerp(0.25, float(e["energy"]), night_f)
+        # street lamps near player at night (follow player)
         if night_f > 0.3 and _lamp_lights.is_empty():
-                for i in 6:
+                for i in 8:
                         var l := OmniLight3D.new()
-                        l.omni_range = 12.0
-                        l.light_color = Color("f0a33c")
-                        l.light_energy = 1.2
+                        l.omni_range = 15.0
+                        l.light_color = Color("ffbe6e")
+                        l.light_energy = 1.3
+                        l.shadow_enabled = false
                         add_child(l)
                         _lamp_lights.append(l)
+        if not _lamp_lights.is_empty() and city != null and player != null:
+                var lp: Array = city.lamp_positions
+                if lp.size() > 0:
+                        # 8 nearest lamps to the player
+                        var pp := Vector2(player.global_position.x, player.global_position.z)
+                        var sorted := lp.duplicate()
+                        sorted.sort_custom(func(a, b): return (a as Vector2).distance_to(pp) < (b as Vector2).distance_to(pp))
+                        for i in _lamp_lights.size():
+                                if i < sorted.size():
+                                        (_lamp_lights[i] as OmniLight3D).position = Vector3((sorted[i] as Vector2).x + 1.2, 4.55, (sorted[i] as Vector2).y)
         for l in _lamp_lights:
-                l.light_energy = 1.2 * night_f * (1.0 if WorldEvents.neon_lights_on() else 0.4)
+                l.light_energy = 1.3 * night_f * (1.0 if WorldEvents.neon_lights_on() else 0.4)
         # rain
         var rain: float = TimeWeather.rain_intensity
         rain_particles.visible = rain > 0.05

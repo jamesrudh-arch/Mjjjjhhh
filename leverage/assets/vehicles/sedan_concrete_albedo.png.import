@@ -1,0 +1,37 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://43o6hdbrgd3k"
+path="res://.godot/imported/sedan_concrete_albedo.png-81b364bd3ef63bc03b5590f69a7960d6.ctex"
+metadata={
+"vram_texture": false
+}
+generator_parameters={
+"md5": "ecf3dc2c47fc3d842ddd96715ca87c41"
+}
+
+[deps]
+
+source_file="res://assets/vehicles/sedan_concrete_albedo.png"
+dest_files=["res://.godot/imported/sedan_concrete_albedo.png-81b364bd3ef63bc03b5590f69a7960d6.ctex"]
+
+[params]
+
+compress/mode=0
+compress/high_quality=false
+compress/lossy_quality=0.7
+compress/hdr_compression=1
+compress/normal_map=0
+compress/channel_pack=0
+mipmaps/generate=true
+mipmaps/limit=-1
+roughness/mode=0
+roughness/src_normal=""
+process/fix_alpha_border=true
+process/premult_alpha=false
+process/normal_map_invert_y=false
+process/hdr_as_srgb=false
+process/hdr_clamp_exposure=false
+process/size_limit=0
+detect_3d/compress_to=1

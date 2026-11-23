@@ -1,0 +1,140 @@
+{
+  "sedan": {
+    "length": 4.5,
+    "width": 1.86,
+    "belt": 0.82,
+    "roof": 1.34,
+    "paint": [
+      0.32,
+      0.3,
+      0.33
+    ],
+    "paint2": [
+      0.32,
+      0.3,
+      0.33
+    ],
+    "body_type": "sedan"
+  },
+  "hatch": {
+    "length": 3.9,
+    "width": 1.78,
+    "belt": 0.8,
+    "roof": 1.36,
+    "cabin_z1": 1.25,
+    "paint": [
+      0.55,
+      0.3,
+      0.18
+    ],
+    "paint2": [
+      0.55,
+      0.3,
+      0.18
+    ],
+    "body_type": "hatch"
+  },
+  "suv": {
+    "length": 4.7,
+    "width": 1.98,
+    "belt": 0.95,
+    "roof": 1.6,
+    "ride": 0.66,
+    "cabin_z1": 1.6,
+    "paint": [
+      0.2,
+      0.24,
+      0.3
+    ],
+    "paint2": [
+      0.2,
+      0.24,
+      0.3
+    ],
+    "body_type": "suv"
+  },
+  "sport": {
+    "length": 4.3,
+    "width": 1.92,
+    "belt": 0.72,
+    "roof": 1.14,
+    "ride": 0.46,
+    "cabin_z0": -0.9,
+    "cabin_z1": 0.85,
+    "paint": [
+      0.65,
+      0.09,
+      0.07
+    ],
+    "paint2": [
+      0.65,
+      0.09,
+      0.07
+    ],
+    "body_type": "sport"
+  },
+  "sport2": {
+    "length": 4.35,
+    "width": 1.94,
+    "belt": 0.72,
+    "roof": 1.16,
+    "ride": 0.47,
+    "cabin_z0": -0.9,
+    "cabin_z1": 0.9,
+    "paint": [
+      0.1,
+      0.12,
+      0.16
+    ],
+    "paint2": [
+      0.1,
+      0.12,
+      0.16
+    ],
+    "body_type": "sport"
+  },
+  "taxi": {
+    "length": 4.55,
+    "width": 1.88,
+    "belt": 0.84,
+    "roof": 1.36,
+    "sign": true,
+    "paint": [
+      0.85,
+      0.72,
+      0.1
+    ],
+    "paint2": [
+      0.85,
+      0.72,
+      0.1
+    ],
+    "body_type": "sedan"
+  },
+  "cop": {
+    "length": 4.6,
+    "width": 1.92,
+    "belt": 0.84,
+    "roof": 1.38,
+    "lightbar": true,
+    "paint": [
+      0.12,
+      0.14,
+      0.2
+    ],
+    "paint2": [
+      0.12,
+      0.14,
+      0.2
+    ],
+    "body_type": "sedan"
+  },
+  "motorcycle": {
+    "type": "moto",
+    "paint": [
+      0.16,
+      0.17,
+      0.2
+    ]
+  }
+}

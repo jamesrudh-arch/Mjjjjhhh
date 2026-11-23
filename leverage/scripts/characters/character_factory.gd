@@ -1,193 +1,178 @@
 class_name CharacterFactory
 extends RefCounted
-## CharacterFactory - builds humanoid actors from the UAL mannequin GLB.
-## Single shared rig + animation set (TDL #3/#12); visual identity comes from
-## material tinting + procedural accessories. All CC0 (see asset_register.md).
+## CharacterFactory v2 - realistic human actors. The UAL mannequin scene stays
+## the animation+skeleton source (57 animations); each actor's mesh+skin is
+## swapped with an authored body (char_*.glb, named binds -> same skeleton).
+## All CC0 + original authored bodies (see asset_register.md).
 
 const MANNEQUIN := "res://assets/characters/ual_mannequin.glb"
 
-## Palette for tinting (top = body material, bottom = joints material)
-const SKIN_TONES := [
-        Color("e8c39e"), Color("c99169"), Color("9c6b4a"), Color("6e4a33"), Color("f0d8c0"),
-]
-const TOP_COLORS := [
-        Color("8a4a3a"), Color("3a5a7a"), Color("5a7a4a"), Color("7a6a3a"), Color("6a4a6a"),
-        Color("4a4a52"), Color("2a2d34"), Color("b8b8a0"), Color("d84fa0"), Color("f0a33c"),
-]
-const BOT_COLORS := [
-        Color("2a2d34"), Color("3a3a40"), Color("5a5248"), Color("26282e"), Color("44464e"),
-]
+const BODY_PATHS := {
+	"dez": "res://assets/characters/char_dez.glb",
+	"tommy": "res://assets/characters/char_tommy.glb",
+	"marisol": "res://assets/characters/char_marisol.glb",
+	"big_theo": "res://assets/characters/char_big_theo.glb",
+	"vito": "res://assets/characters/char_vito.glb",
+	"rizzo": "res://assets/characters/char_rizzo.glb",
+	"ava": "res://assets/characters/char_ava.glb",
+	"ren": "res://assets/characters/char_ren.glb",
+	"lucy_fang": "res://assets/characters/char_lucy_fang.glb",
+	"officer_brant": "res://assets/characters/char_officer_brant.glb",
+	"sergeant_oduya": "res://assets/characters/char_sergeant_oduya.glb",
+	"doc_lennox": "res://assets/characters/char_doc_lennox.glb",
+	"nadia": "res://assets/characters/char_nadia.glb",
+	"juno": "res://assets/characters/char_juno.glb",
+	"cabbie_moses": "res://assets/characters/char_cabbie_moses.glb",
+	"enemy_punk": "res://assets/characters/char_enemy_punk.glb",
+	"enemy_thug": "res://assets/characters/char_enemy_thug.glb",
+	"enemy_soldier": "res://assets/characters/char_enemy_soldier.glb",
+	"enemy_brute": "res://assets/characters/char_enemy_brute.glb",
+	"enemy_knifer": "res://assets/characters/char_enemy_knifer.glb",
+	"ped_m1": "res://assets/characters/char_ped_m1.glb",
+	"ped_m2": "res://assets/characters/char_ped_m2.glb",
+	"ped_m3": "res://assets/characters/char_ped_m3.glb",
+	"ped_f1": "res://assets/characters/char_ped_f1.glb",
+	"ped_f2": "res://assets/characters/char_ped_f2.glb",
+	"ped_f3": "res://assets/characters/char_ped_f3.glb",
+	"ped_w1": "res://assets/characters/char_ped_w1.glb",
+	"ped_w2": "res://assets/characters/char_ped_w2.glb",
+}
+
+const PED_POOL := ["ped_m1", "ped_m2", "ped_m3", "ped_f1", "ped_f2", "ped_f3", "ped_w1", "ped_w2"]
+const ENEMY_POOL := ["enemy_punk", "enemy_thug", "enemy_soldier", "enemy_brute", "enemy_knifer"]
+const ROUGH_POOL := ["ped_w1", "enemy_punk", "enemy_thug"]   # docklands/ironworks peds
+
+## Per-actor scale for silhouette variety (uniform node scale, animation-safe).
+const SCALES := {
+	"big_theo": 1.08, "enemy_brute": 1.08, "rizzo": 1.05, "vito": 0.99,
+	"tommy": 0.96, "juno": 0.95, "ava": 0.96, "doc_lennox": 1.01,
+	"enemy_punk": 0.97, "enemy_knifer": 0.96,
+}
+
+static var _body_cache := {}   # body_id -> {mesh: Mesh, skin: Skin}
 
 
-static func make_actor(top_color: Color, bot_color: Color, skin: Color, scale_factor := 1.0) -> Node3D:
-        var packed: PackedScene = load(MANNEQUIN)
-        if packed == null:
-                push_error("CharacterFactory: mannequin missing")
-                return Node3D.new()
-        var inst: Node3D = packed.instantiate()
-        inst.scale = Vector3.ONE * scale_factor
-        _tint(inst, top_color, bot_color, skin)
-        return inst
+static func _body_resources(body_id: String) -> Dictionary:
+	if _body_cache.has(body_id):
+		return _body_cache[body_id]
+	var path: String = BODY_PATHS.get(body_id, "")
+	if path == "" or not ResourceLoader.exists(path):
+		_body_cache[body_id] = {}
+		return _body_cache[body_id]
+	var packed: PackedScene = load(path)
+	var inst: Node3D = packed.instantiate()
+	var body_mi: MeshInstance3D = _find(inst, "Body") as MeshInstance3D
+	var out := {}
+	if body_mi and body_mi.mesh:
+		out = {"mesh": body_mi.mesh, "skin": body_mi.skin}
+	inst.queue_free()
+	_body_cache[body_id] = out
+	return out
 
 
-static func _tint(inst: Node3D, top_color: Color, bot_color: Color, skin: Color) -> void:
-        var mi: MeshInstance3D = _find_type(inst, "MeshInstance3D") as MeshInstance3D
-        if mi == null or mi.mesh == null:
-                return
-        # surface 0: M_Main body, surface 1: M_Joints
-        var body := StandardMaterial3D.new()
-        body.albedo_color = top_color
-        body.roughness = 0.85
-        var joints := StandardMaterial3D.new()
-        joints.albedo_color = bot_color
-        joints.roughness = 0.9
-        mi.set_surface_override_material(0, body)
-        mi.set_surface_override_material(1, joints)
-        inst.set_meta("skin_tone", skin)
+## Build an actor: mannequin scene (skeleton + 57 animations) with the
+## authored body mesh swapped in (named skin binds -> identical DEF-* rig).
+static func make_actor(body_id: String, scale_f := 1.0) -> Node3D:
+	var packed: PackedScene = load(MANNEQUIN)
+	if packed == null:
+		push_error("CharacterFactory: mannequin missing")
+		return Node3D.new()
+	var inst: Node3D = packed.instantiate()
+	var res := _body_resources(body_id)
+	if not res.is_empty():
+		var man_mi: MeshInstance3D = _find(inst, "Mannequin") as MeshInstance3D
+		if man_mi != null:
+			man_mi.mesh = res["mesh"]
+			if res.get("skin"):
+				man_mi.skin = res["skin"]
+			man_mi.name = "Body"
+	scale_f *= float(SCALES.get(body_id, 1.0))
+	if absf(scale_f - 1.0) > 0.001:
+		inst.scale = Vector3.ONE * scale_f
+	return inst
 
 
-## Accessories attach to bones on the skeleton via BoneAttachment3D.
+## Random tinted-scale pedestrian from the authored pool.
+static func make_random_ped(rng: RandomNumberGenerator) -> Node3D:
+	var pool := PED_POOL
+	if rng.randf() < 0.18:
+		pool = ROUGH_POOL
+	var id: String = pool[rng.randi_range(0, pool.size() - 1)]
+	return make_actor(id, rng.randf_range(0.97, 1.03))
+
+
+## Random enemy from the enemy cast.
+static func make_random_enemy(rng: RandomNumberGenerator) -> Node3D:
+	return make_actor(ENEMY_POOL[rng.randi_range(0, ENEMY_POOL.size() - 1)])
+
+
+## Named-cast actor: body id == npc id.
+static func make_named(npc_id: String) -> Node3D:
+	if BODY_PATHS.has(npc_id):
+		return make_actor(npc_id)
+	return make_random_ped(RandomNumberGenerator.new())
+
+
+## Player actor (Dez): amber jacket signature look.
+static func make_player() -> Node3D:
+	return make_actor("dez")
+
+
+## Accessories are baked into the authored bodies (caps, fedoras, hair).
+## Kept for API compatibility; attaches only a held item to the hand.
 static func attach_accessory(actor: Node3D, kind: String, color: Color) -> Node3D:
-        var sk: Skeleton3D = _find_type(actor, "Skeleton3D") as Skeleton3D
-        if sk == null:
-                return null
-        var bone_name := "DEF-head"
-        var mesh: Mesh = null
-        var offset := Vector3.ZERO
-        match kind:
-                "cap":
-                        mesh = _box(0.26, 0.10, 0.30)
-                        offset = Vector3(0, 0.09, 0.04)
-                "fedora":
-                        var brim := _box(0.34, 0.02, 0.34)
-                        var crown := _box(0.22, 0.14, 0.22)
-                        mesh = _combine(brim, crown, Vector3(0, 0.08, 0))
-                        offset = Vector3(0, 0.10, 0)
-                "flatcap":
-                        mesh = _box(0.28, 0.08, 0.28)
-                        offset = Vector3(0, 0.08, 0)
-                "hoodie":
-                        mesh = _box(0.30, 0.24, 0.26)
-                        offset = Vector3(0, 0.06, -0.02)
-                "ponytail":
-                        mesh = _box(0.08, 0.30, 0.08)
-                        offset = Vector3(0, 0.05, -0.12)
-                "bun":
-                        mesh = _box(0.12, 0.10, 0.12)
-                        offset = Vector3(0, 0.11, -0.06)
-                "holster":
-                        bone_name = "DEF-thigh.R"
-                        mesh = _box(0.10, 0.16, 0.06)
-                        offset = Vector3(0.09, -0.05, 0)
-                _:
-                        return null
-        if mesh == null:
-                return null
-        var att := BoneAttachment3D.new()
-        att.bone_name = bone_name
-        att.name = "BoneAtt_" + kind
-        sk.add_child(att)
-        var mi := MeshInstance3D.new()
-        mi.mesh = mesh
-        var mat := StandardMaterial3D.new()
-        mat.albedo_color = color
-        mat.roughness = 0.8
-        mi.set_material_override(mat)
-        mi.position = offset
-        att.add_child(mi)
-        return mi
+	if kind == "holster":
+		return attach_to_hand(actor, null)
+	return null
 
 
 ## Attach a held item (weapon) to the right hand.
 static func attach_to_hand(actor: Node3D, mesh: Mesh, offset := Vector3(0.04, 0.02, 0.05)) -> Node3D:
-        var sk: Skeleton3D = _find_type(actor, "Skeleton3D") as Skeleton3D
-        if sk == null:
-                return null
-        var att := BoneAttachment3D.new()
-        att.bone_name = "DEF-hand.R"
-        sk.add_child(att)
-        var mi := MeshInstance3D.new()
-        mi.mesh = mesh
-        mi.position = offset
-        att.add_child(mi)
-        return mi
+	if mesh == null:
+		return null
+	var sk: Skeleton3D = _find_type(actor, "Skeleton3D") as Skeleton3D
+	if sk == null:
+		return null
+	var att := BoneAttachment3D.new()
+	att.bone_name = "DEF-hand.R"
+	att.name = "BoneAtt_hand"
+	sk.add_child(att)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = offset
+	att.add_child(mi)
+	return mi
 
 
 static func hand_mesh_from_glb(glb_path: String, scale_factor: float, rot := Vector3.ZERO) -> MeshInstance3D:
-        var packed: PackedScene = load(glb_path)
-        var mi := MeshInstance3D.new()
-        if packed != null:
-                var inst: Node3D = packed.instantiate()
-                var src: MeshInstance3D = _find_type(inst, "MeshInstance3D") as MeshInstance3D
-                if src and src.mesh:
-                        mi.mesh = src.mesh
-        mi.scale = Vector3.ONE * scale_factor
-        mi.rotation_degrees = rot
-        return mi
+	var mi := MeshInstance3D.new()
+	if ResourceLoader.exists(glb_path):
+		var packed: PackedScene = load(glb_path)
+		var inst: Node3D = packed.instantiate()
+		var src: MeshInstance3D = _find_type(inst, "MeshInstance3D") as MeshInstance3D
+		if src and src.mesh:
+			mi.mesh = src.mesh
+		inst.queue_free()
+	mi.scale = Vector3.ONE * scale_factor
+	mi.rotation_degrees = rot
+	return mi
 
 
-static func _box(w: float, h: float, d: float) -> BoxMesh:
-        var m := BoxMesh.new()
-        m.size = Vector3(w, h, d)
-        return m
-
-
-static func _combine(a: Mesh, b: Mesh, offset: Vector3) -> ArrayMesh:
-        var out := ArrayMesh.new()
-        for m in [a, b]:
-                var arrays: Array = m.surface_get_arrays(0)
-                if m == b:
-                        var verts: PackedVector3Array = arrays[ArrayMesh.ARRAY_VERTEX]
-                        var moved: PackedVector3Array = PackedVector3Array()
-                        moved.resize(verts.size())
-                        for i in verts.size():
-                                moved[i] = offset + verts[i]
-                        arrays[ArrayMesh.ARRAY_VERTEX] = moved
-                out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-        return out
+static func _find(node: Node, n: String) -> Node:
+	if node is MeshInstance3D and String(node.name) == n:
+		return node
+	for c in node.get_children():
+		var r := _find(c, n)
+		if r:
+			return r
+	return null
 
 
 static func _find_type(node: Node, type: String) -> Node:
-        if node.get_class() == type:
-                return node
-        for c in node.get_children():
-                var r := _find_type(c, type)
-                if r:
-                        return r
-        return null
-
-
-## Random tinted actor for pedestrians.
-static func make_random_ped(rng: RandomNumberGenerator) -> Node3D:
-        var top: Color = TOP_COLORS[rng.randi_range(0, TOP_COLORS.size() - 1)]
-        var bot: Color = BOT_COLORS[rng.randi_range(0, BOT_COLORS.size() - 1)]
-        var skin: Color = SKIN_TONES[rng.randi_range(0, SKIN_TONES.size() - 1)]
-        var s := rng.randf_range(0.95, 1.05)
-        return make_actor(top, bot, skin, s)
-
-
-## Named-cast actor: tint/accessories by NPCDirector.CAST entry.
-static func make_named(npc_id: String) -> Node3D:
-        var tint: Color = NPCDirector.cast_meta(npc_id, "tint", Color("6a6a6a"))
-        var bot := Color("2a2d34")
-        var skin := Color("e8c39e")
-        var actor := make_actor(tint, bot, skin)
-        var hair: String = String(NPCDirector.cast_meta(npc_id, "hair", ""))
-        var hat: String = String(NPCDirector.cast_meta(npc_id, "hat", ""))
-        if hair != "":
-                attach_accessory(actor, hair, Color("3a2a1a"))
-        if hat != "":
-                attach_accessory(actor, hat, Color("2a2d34"))
-        var body := String(NPCDirector.cast_meta(npc_id, "body", ""))
-        if body == "suit":
-                attach_accessory(actor, "flatcap", tint.darkened(0.3))
-        if body == "police":
-                attach_accessory(actor, "cap", Color("3b6fd6"))
-        return actor
-
-
-## Player actor (Dez): amber-jacket signature look.
-static func make_player() -> Node3D:
-        var actor := make_actor(Color("c8761f"), Color("23252c"), Color("e8c39e"))
-        attach_accessory(actor, "holster", Color("1d1f24"))
-        return actor
+	if node.get_class() == type:
+		return node
+	for c in node.get_children():
+		var r := _find_type(c, type)
+		if r:
+			return r
+	return null

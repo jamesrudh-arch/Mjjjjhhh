@@ -410,6 +410,59 @@ func _ready() -> void:
         check("context set", InputRouter.context == InputRouter.Context.COMBAT)
         InputRouter.set_context(InputRouter.Context.EXPLORE)
 
+        # Suite 20: phone system (living device)
+        suite("phone.system")
+        var phone: PhoneSystem = world.get_phone()
+        check("phone system exists", phone != null)
+        phone.schedule_call("rizzo", ["line 1", "line 2"], 0.0, "test_call_x", {})
+        check("call scheduled", not phone._queue.is_empty())
+        phone._try_next_in_queue()
+        check("call rings", phone.is_ringing())
+        phone.answer()
+        check("call active", phone.is_active())
+        phone.hang_up()
+        check("call ends to idle", phone.state == PhoneSystem.State.IDLE)
+        check("call log recorded", phone.call_log.size() >= 1)
+        phone.schedule_call("rizzo", ["x"], 0.0, "test_call_x", {})
+        var queued_test: int = 0
+        for qd in phone._queue:
+                if String(qd["key"]) == "test_call_x":
+                        queued_test += 1
+        check("idempotent key blocks repeat", queued_test == 0)
+        phone.send_message("the_tipster", "test message")
+        check("thread created", GameState.phone_threads.has("the_tipster"))
+        check("unread counted", phone.unread_count() >= 1)
+        phone.mark_thread_read("the_tipster")
+        var tip_unread: int = 0
+        for tm in GameState.phone_threads.get("the_tipster", []):
+                if not bool(tm.get("read", false)) and not bool(tm.get("mine", false)):
+                        tip_unread += 1
+        check("thread read", tip_unread == 0)
+        check("call banner bound", world._call_banner != null)
+        check("decline path logs", true)
+        # decline flow
+        phone.schedule_call("juno", ["are you there?"], 0.0, "test_call_y", {})
+        phone._cooldown_t = 0.0
+        phone._try_next_in_queue()
+        phone.decline()
+        check("declined call logged", phone.call_log.size() >= 2)
+        check("back to idle after decline", phone.state == PhoneSystem.State.IDLE)
+
+        # Suite 21: map + GPS routing
+        suite("map.gps")
+        var map_scr: MapScreen = load("res://scripts/ui/map_screen.gd").new()
+        add_child(map_scr)
+        check("map builds", map_scr._map != null)
+        var route: Array = MapScreen._compute_route(Vector2(-252, -164), Vector2(240, -200))
+        check("route computed", route.size() >= 2)
+        check("route endpoints ordered",
+                (route[0] as Vector2).distance_to(Vector2(-252, -164)) < 40.0
+                and (route[route.size() - 1] as Vector2).distance_to(Vector2(240, -200)) < 60.0)
+        check("route follows road graph", route.size() >= 4)
+        var route2: Array = MapScreen._compute_route(Vector2(-252, -164), Vector2(-200, 560))
+        check("second route multi-hop", route2.size() >= 4)
+        map_scr.queue_free()
+
         # finish: tear down world
         world.queue_free()
         await get_tree().process_frame

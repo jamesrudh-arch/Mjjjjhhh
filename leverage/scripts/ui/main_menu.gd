@@ -19,6 +19,19 @@ func _ready() -> void:
 
 
 func _build() -> void:
+        var bg_path := "res://assets/ui/keyart/menu_bg_0.png"
+        if ResourceLoader.exists(bg_path):
+                var bg := TextureRect.new()
+                bg.texture = load(bg_path)
+                bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+                bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+                bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+                bg.modulate = Color(1, 1, 1, 0.9)
+                add_child(bg)
+                var scrim := ColorRect.new()
+                scrim.set_anchors_preset(Control.PRESET_FULL_RECT)
+                scrim.color = Color(0.02, 0.02, 0.04, 0.42)
+                add_child(scrim)
         add_child(LvgTheme.color_rect(LvgTheme.CHARCOAL))
         # faint city silhouette strip
         var strip := Control.new()
