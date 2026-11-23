@@ -1,0 +1,240 @@
+checks=238
+failed=0
+boot.autoloads|PASS|EventBus autoload
+boot.autoloads|PASS|GameState autoload
+boot.autoloads|PASS|SaveSystem autoload
+boot.autoloads|PASS|InputRouter autoload
+boot.autoloads|PASS|AudioSystem autoload
+boot.autoloads|PASS|TimeWeather autoload
+boot.autoloads|PASS|WorldEvents autoload
+boot.autoloads|PASS|CityDirector autoload
+boot.autoloads|PASS|NPCDirector autoload
+boot.autoloads|PASS|PoliceSystem autoload
+boot.autoloads|PASS|MissionSystem autoload
+boot.autoloads|PASS|DialogueSystem autoload
+boot.autoloads|PASS|GameManager autoload
+boot.flow|PASS|boot cards built
+boot.flow|PASS|boot state SPLASH
+boot.flow|PASS|boot timeline completed
+boot.flow|PASS|boot reached menu handover stage
+menu.build|PASS|menu title built
+menu.build|PASS|menu buttons built
+intro.cinematic|PASS|intro beats advancing
+intro.cinematic|PASS|intro subtitle shows
+intro.cinematic|PASS|intro beat count
+intro.cinematic|PASS|intro tutorial steps
+intro.cinematic|PASS|intro finishes cleanly
+combat.disciplines|PASS|discipline brawler defined
+combat.disciplines|PASS|brawler has idle
+combat.disciplines|PASS|brawler has dodge
+combat.disciplines|PASS|brawler has counter
+combat.disciplines|PASS|brawler has punch_chain
+combat.disciplines|PASS|brawler has kick_chain
+combat.disciplines|PASS|brawler has heavy
+combat.disciplines|PASS|brawler has passive
+combat.disciplines|PASS|brawler anim 'Guard_Idle' exists in library
+combat.disciplines|PASS|brawler anim 'Roll' exists in library
+combat.disciplines|PASS|brawler anim 'Counter_Trip' exists in library
+combat.disciplines|PASS|brawler anim 'Sword_Attack' exists in library
+combat.disciplines|PASS|brawler anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|brawler anim 'Punch_Cross' exists in library
+combat.disciplines|PASS|brawler anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|brawler anim 'Kick_Front' exists in library
+combat.disciplines|PASS|brawler anim 'Kick_Push' exists in library
+combat.disciplines|PASS|discipline kickboxing defined
+combat.disciplines|PASS|kickboxing has idle
+combat.disciplines|PASS|kickboxing has dodge
+combat.disciplines|PASS|kickboxing has counter
+combat.disciplines|PASS|kickboxing has punch_chain
+combat.disciplines|PASS|kickboxing has kick_chain
+combat.disciplines|PASS|kickboxing has heavy
+combat.disciplines|PASS|kickboxing has passive
+combat.disciplines|PASS|kickboxing anim 'Guard_Idle' exists in library
+combat.disciplines|PASS|kickboxing anim 'Roll' exists in library
+combat.disciplines|PASS|kickboxing anim 'Counter_Trip' exists in library
+combat.disciplines|PASS|kickboxing anim 'Kick_Round' exists in library
+combat.disciplines|PASS|kickboxing anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|kickboxing anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|kickboxing anim 'Kick_Push' exists in library
+combat.disciplines|PASS|kickboxing anim 'Kick_Round' exists in library
+combat.disciplines|PASS|kickboxing anim 'Kick_Front' exists in library
+combat.disciplines|PASS|discipline grappling defined
+combat.disciplines|PASS|grappling has idle
+combat.disciplines|PASS|grappling has dodge
+combat.disciplines|PASS|grappling has counter
+combat.disciplines|PASS|grappling has punch_chain
+combat.disciplines|PASS|grappling has kick_chain
+combat.disciplines|PASS|grappling has heavy
+combat.disciplines|PASS|grappling has passive
+combat.disciplines|PASS|grappling anim 'Guard_Idle' exists in library
+combat.disciplines|PASS|grappling anim 'Roll' exists in library
+combat.disciplines|PASS|grappling anim 'Counter_Trip' exists in library
+combat.disciplines|PASS|grappling anim 'Grapple_Grab' exists in library
+combat.disciplines|PASS|grappling anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|grappling anim 'Kick_Front' exists in library
+combat.disciplines|PASS|discipline drunken defined
+combat.disciplines|PASS|drunken has idle
+combat.disciplines|PASS|drunken has dodge
+combat.disciplines|PASS|drunken has counter
+combat.disciplines|PASS|drunken has punch_chain
+combat.disciplines|PASS|drunken has kick_chain
+combat.disciplines|PASS|drunken has heavy
+combat.disciplines|PASS|drunken has passive
+combat.disciplines|PASS|drunken anim 'Drunken_Idle' exists in library
+combat.disciplines|PASS|drunken anim 'Drunken_Sway' exists in library
+combat.disciplines|PASS|drunken anim 'Counter_Trip' exists in library
+combat.disciplines|PASS|drunken anim 'Drunken_Swing' exists in library
+combat.disciplines|PASS|drunken anim 'Punch_Cross' exists in library
+combat.disciplines|PASS|drunken anim 'Drunken_Swing' exists in library
+combat.disciplines|PASS|drunken anim 'Kick_Front' exists in library
+combat.disciplines|PASS|discipline weapon defined
+combat.disciplines|PASS|weapon has idle
+combat.disciplines|PASS|weapon has dodge
+combat.disciplines|PASS|weapon has counter
+combat.disciplines|PASS|weapon has punch_chain
+combat.disciplines|PASS|weapon has kick_chain
+combat.disciplines|PASS|weapon has heavy
+combat.disciplines|PASS|weapon has passive
+combat.disciplines|PASS|weapon anim 'Pistol_Idle' exists in library
+combat.disciplines|PASS|weapon anim 'Roll' exists in library
+combat.disciplines|PASS|weapon anim 'Counter_Trip' exists in library
+combat.disciplines|PASS|weapon anim 'Sword_Attack' exists in library
+combat.disciplines|PASS|weapon anim 'Punch_Jab' exists in library
+combat.disciplines|PASS|weapon anim 'Pistol_Shoot' exists in library
+combat.disciplines|PASS|weapon anim 'Kick_Front' exists in library
+combat.disciplines|PASS|5 distinct disciplines
+combat.disciplines|PASS|disciplines genuinely distinct
+state.economy|PASS|new game money 250
+state.economy|PASS|money add
+state.economy|PASS|money spend + stat
+state.economy|PASS|snapshot/restore roundtrip
+state.economy|PASS|discipline xp accumulates
+state.economy|PASS|reputation clamps
+city.areas|PASS|6 areas defined
+city.areas|PASS|old_quarter at spawn
+city.areas|PASS|kestrel at tower
+city.areas|PASS|neon strip pos
+city.areas|PASS|road detection works
+city.areas|PASS|nearest road found
+npc.sim|PASS|16 named cast entries
+npc.sim|PASS|13 spawnable + 3 virtual
+npc.sim|PASS|cast marisol has anchors
+npc.sim|PASS|cast big_theo has anchors
+npc.sim|PASS|cast vito has anchors
+npc.sim|PASS|cast ava has anchors
+npc.sim|PASS|cast ren has anchors
+npc.sim|PASS|cast nadia has anchors
+npc.sim|PASS|marisol near bar
+npc.sim|PASS|witness detection
+npc.sim|PASS|ped target 3..25
+police.wanted|PASS|wanted starts 0
+police.wanted|PASS|heat rises on crime
+police.wanted|PASS|wanted escalated
+police.wanted|PASS|patrol plan at wanted>=3
+police.wanted|PASS|busted cleanup resets
+world.integration|PASS|world instantiated
+world.integration|PASS|player exists
+world.integration|PASS|player in group
+world.integration|PASS|camera rig exists
+world.integration|PASS|combat component exists
+world.integration|PASS|weapons component exists
+world.integration|PASS|traffic manager exists
+world.integration|PASS|HUD exists
+world.integration|PASS|touch controls exist
+world.integration|PASS|city built
+world.integration|PASS|interiors built
+world.integration|PASS|collectibles placed
+world.integration|PASS|player spawn area old_quarter
+world.integration|PASS|time advances
+world.integration|PASS|traffic agents spawned
+combat.sim|PASS|enemy in combatant group
+combat.sim|PASS|punch dealt damage
+combat.sim|PASS|dodge grants i-frames
+combat.sim|PASS|enemy dies
+combat.sim|PASS|kickboxing punch mult applied
+combat.sim|PASS|kick stats scaled
+mission.journey|PASS|mission debt_first starts
+mission.journey|PASS|mission debt_first completed
+mission.journey|PASS|mission make_change starts
+mission.journey|PASS|mission make_change completed
+mission.journey|PASS|mission rendezvous starts
+mission.journey|PASS|mission rendezvous completed
+mission.journey|PASS|mission gym_introduction starts
+mission.journey|PASS|mission gym_introduction completed
+mission.journey|PASS|mission bar_night starts
+mission.journey|PASS|mission bar_night completed
+mission.journey|PASS|mission kestrel_summons starts
+mission.journey|PASS|mission kestrel_summons completed
+mission.journey|PASS|mission tower_heist starts
+mission.journey|PASS|mission tower_heist completed
+mission.journey|PASS|mission turf_war starts
+mission.journey|PASS|mission turf_war completed
+mission.journey|PASS|mission scrapyard_lucy starts
+mission.journey|PASS|mission scrapyard_lucy completed
+mission.journey|PASS|mission the_letter starts
+mission.journey|PASS|mission the_letter completed
+mission.journey|PASS|mission the_meet starts
+mission.journey|PASS|mission the_meet completed
+mission.journey|PASS|mission rescue_tommy starts
+mission.journey|PASS|mission rescue_tommy completed
+mission.journey|PASS|mission finale_villa starts
+mission.journey|PASS|mission finale_villa completed
+mission.journey|PASS|chapter reached 5
+mission.journey|PASS|an ending resolved
+mission.journey|PASS|missions completed count
+mission.journey|PASS|money earned through campaign
+story.consequences|PASS|ch1 choice recorded
+story.consequences|PASS|ending flag set
+dialogue.system|PASS|rizzo has dialogue
+dialogue.system|PASS|marisol has dialogue
+dialogue.system|PASS|vito has dialogue
+dialogue.system|PASS|dialogue starts
+dialogue.system|PASS|dialogue advances on choice
+vehicles.traffic|PASS|vehicle spawned
+vehicles.traffic|PASS|vehicle in groups
+vehicles.traffic|PASS|vehicle enter context
+vehicles.traffic|PASS|player hidden in vehicle
+vehicles.traffic|PASS|vehicle exit restores context
+vehicles.traffic|PASS|player visible after exit
+vehicles.motorcycle|PASS|motorcycle spawned
+vehicles.motorcycle|PASS|motorcycle visual from authored GLB
+vehicles.motorcycle|PASS|motorcycle kind meta
+vehicles.motorcycle|PASS|motorcycle interact text
+vehicles.motorcycle|PASS|motorcycle has exactly 2 wheels
+vehicles.motorcycle|PASS|motorcycle lighter than cars
+vehicles.motorcycle|PASS|motorcycle stronger force
+vehicles.motorcycle|PASS|motorcycle roll locked (arcade upright)
+vehicles.motorcycle|PASS|motorcycle enter context
+vehicles.motorcycle|PASS|motorcycle exit restores context
+vehicles.motorcycle|PASS|motorcycle lean clamp
+vehicles.motorcycle|PASS|parked motorcycles placed in world
+traffic.sim|PASS|traffic agents moving (>=1)
+pedestrians.pool|PASS|pedestrians spawned
+pedestrians.pool|PASS|pedestrians animate
+police.units|PASS|police spawn on wanted
+world.events|PASS|event activates
+world.events|PASS|event area effects
+saves.roundtrip|PASS|save slot 2
+saves.roundtrip|PASS|slot exists
+saves.roundtrip|PASS|load restores
+saves.roundtrip|PASS|slot deleted
+time.weather|PASS|weather sets
+time.weather|PASS|rain intensity rising
+audio.radio|PASS|radio track file exists: cinder_fm
+audio.radio|PASS|radio track file exists: strip_wave
+audio.radio|PASS|radio track file exists: iron_pulse
+audio.radio|PASS|radio starts off
+audio.radio|PASS|radio station stored
+audio.radio|PASS|radio stream loaded
+audio.radio|PASS|radio silent outside vehicles
+audio.radio|PASS|radio plays inside vehicle
+audio.radio|PASS|radio retunes live
+audio.radio|PASS|radio stops on exit
+audio.radio|PASS|radio off restored
+ui.touch|PASS|touch controls built
+ui.touch|PASS|fixed mapping X=punch action
+ui.touch|PASS|fixed mapping Y=heavy action
+ui.touch|PASS|fixed mapping A=kick action
+ui.touch|PASS|fixed mapping B=dodge action
+input.router|PASS|router context enum
+input.router|PASS|context set

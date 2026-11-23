@@ -1,0 +1,24 @@
+# Secrets — never commit
+.env
+.env.*
+
+# Local tool installs & raw asset downloads (1.8 GB; see leverage/docs/asset_register.md for sources)
+tools/
+
+# Godot import cache (regenerable by the editor)
+.godot/
+*.godot/
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+
+# Local skill files
+skills/
+
+# OS junk
+.DS_Store
+Thumbs.db
