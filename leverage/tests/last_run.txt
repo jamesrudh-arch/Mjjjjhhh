@@ -126,7 +126,7 @@ npc.sim|PASS|cast ren has anchors
 npc.sim|PASS|cast nadia has anchors
 npc.sim|PASS|marisol near bar
 npc.sim|PASS|witness detection
-npc.sim|PASS|ped target 3..25
+npc.sim|PASS|ped target 3..50
 police.wanted|PASS|wanted starts 0
 police.wanted|PASS|heat rises on crime
 police.wanted|PASS|wanted escalated

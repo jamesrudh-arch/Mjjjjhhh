@@ -133,7 +133,7 @@ func _ready() -> void:
         var witnesses: Array = NPCDirector.witnesses_of(Vector3(-240, 0, -180), 30.0)
         check("witness detection", witnesses.size() >= 1)
         var target_n: int = NPCDirector.pedestrian_target_count("neon_strip")
-        check("ped target 3..25", target_n >= 3 and target_n <= 25)
+        check("ped target 3..50", target_n >= 3 and target_n <= 50)
 
         # Suite 5: police / wanted
         suite("police.wanted")

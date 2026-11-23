@@ -44,3 +44,33 @@
 
 ### Fixes
 - Animation name discovery (Godot glTF importer strips `_Loop`); Array.filter callback arity; menu/HUD tab-indentation parse errors; Blender session reuse (factory-reset breaks glTF addon); reimport-before-render discipline (stale import cache).
+
+## v2.1.0 — Combat Feel / "Juice" Pass (session 5, 2026-11-23)
+
+### Combat (P0)
+- NEW `scripts/combat/combat_feel.gd`: static juice helpers — token-guarded hit-stop
+  (`Engine.time_scale` + ignore_time_scale restore), slow-motion, pooled CPUParticles3D
+  impact bursts (14-particle pool, mobile-renderer safe).
+- Player hits now LAND: hit-stop scaled by damage/knockback, camera kick (damped pitch
+  spring) + shake + impact particles per connect; throws get slow-mo + FOV punch-in;
+  counters get hit-stop + `sfx_counter`.
+- Enemy brain rewritten (`combatant.gd`): attack tokens (max 2 strike simultaneously,
+  rest circle/flank at a ring with per-enemy direction), audible + visual telegraphs
+  (slow wind-up anim + swing SFX at wind-up start so counters are READABLE),
+  knockdown (Death01 fall → lie → Roll get-up, ×2 vulnerable while down), wounded
+  retreat + shout for help, weapon users reload every 3rd strike, discipline-flavored
+  reach/speed/strike anims. Nobody stands still eating hits.
+- Death presentation: strong hit-stop + particles on every kill; last hostile in a
+  brawl goes down in slow motion with camera zoom (cinematic finisher).
+
+### Movement & world (P1/P2)
+- Footstep SFX by gait cadence (was: no footsteps at all).
+- Sprint FOV kick (+6° eased) via new `CameraRig.sprint_fov`.
+- Pedestrian ambient target 25→50; idle variety (Idle_Talking conversations that
+  face each other, Idle_Torch phone-like pose).
+
+### Validation
+- 257/257 PASS on 4.4.1 (project dir AND freshly exported PCK — from-pack validation
+  now re-established for v2-line exports).
+- Mobile (Vulkan) renderer path now exercised in sandbox via user-local Mesa lavapipe
+  ICD (`tools/vulkan-deb/`, no root needed) — TDL #25. Fresh gameplay capture verified.

@@ -56,9 +56,8 @@ func _tick_walk(delta: float) -> void:
         var to_t := target - global_position
         to_t.y = 0
         if to_t.length() < 1.2:
-                if randf() < 0.2:
-                        _state = "idle"
-                        _play("Idle")
+                if randf() < 0.25:
+                        _enter_idle()
                 else:
                         target = NPCDirector.pedestrian_walk_target(global_position)
                 return
@@ -71,6 +70,14 @@ func _tick_walk(delta: float) -> void:
 
 func _tick_idle(delta: float) -> void:
         _idle_t -= delta
+        # face a nearby idle pedestrian: reads as a street conversation
+        if _idle_t < 5.0:
+                var buddy := _nearest_idle_ped()
+                if buddy != null:
+                        var to_b: Vector3 = buddy.global_position - global_position
+                        to_b.y = 0.0
+                        if to_b.length_squared() > 0.01:
+                                rotation.y = atan2(to_b.x, to_b.z)
         if _idle_t <= 0.0:
                 _state = "walk"
                 _play("Walk")
@@ -81,6 +88,32 @@ func _tick_idle(delta: float) -> void:
 
 
 var _idle_t := 2.0
+
+
+## Idle variety: plain stop, chatting (face the nearest idler) or
+## "on the phone" style pose (Idle_Torch reads as a raised device).
+func _enter_idle() -> void:
+        _state = "idle"
+        _idle_t = randf_range(3.0, 8.0)
+        var r := randf()
+        if r < 0.55:
+                _play("Idle_Talking")
+        elif r < 0.75:
+                _play("Idle_Torch")
+        else:
+                _play("Idle")
+
+
+func _nearest_idle_ped() -> Node3D:
+        var best: Node3D = null
+        var best_d := 1.8
+        for p in get_tree().get_nodes_in_group("pedestrian"):
+                if p is PedestrianAgent and p != self and p._state == "idle":
+                        var d: float = global_position.distance_to(p.global_position)
+                        if d < best_d:
+                                best_d = d
+                                best = p
+        return best
 
 
 func _tick_flee(delta: float) -> void:

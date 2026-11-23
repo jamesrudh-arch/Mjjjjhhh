@@ -18,6 +18,11 @@ var follow_target: Node3D
 var lock_target: Node3D = null
 var _shake_time := 0.0
 var _shake_mag := 0.0
+var _kick := 0.0            # impact pitch kick, decays
+var _kick_vel := 0.0
+var _fov_extra := 0.0       # transient FOV offset (slow-mo punch-in)
+var _fov_target := 0.0
+var sprint_fov := 0.0       # set by PlayerController (sprint speed feel)
 
 
 func _ready() -> void:
@@ -37,6 +42,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
         if follow_target == null or not is_instance_valid(follow_target):
                 return
+        # kick spring: sharp pitch jolt on impact, critically damped return
+        _kick_vel += (-140.0 * _kick - 22.0 * _kick_vel) * delta
+        _kick += _kick_vel * delta
+        _fov_extra = lerpf(_fov_extra, _fov_target, clamp(6.0 * delta, 0.0, 1.0))
+        camera.fov = 62.0 + _fov_extra + sprint_fov
         # follow position
         var target_pos: Vector3 = follow_target.global_position + Vector3(0, 1.4, 0)
         global_position = global_position.lerp(target_pos, clamp(14.0 * delta, 0, 1))
@@ -55,7 +65,21 @@ func _process(delta: float) -> void:
                 var want_pitch: float = clampf(asin(clampf(to_t.normalized().y, -1.0, 1.0)) * 0.8, PITCH_MIN, PITCH_MAX)
                 yaw = lerp_angle(yaw, want_yaw, clamp(LOCKON_LERP * delta, 0, 1))
                 pitch = lerp(pitch, -want_pitch, clamp(LOCKON_LERP * delta, 0, 1))
-        rotation = Vector3(pitch, yaw, _shake(delta))
+        rotation = Vector3(pitch + _kick, yaw, _shake(delta))
+
+
+func kick(strength := 0.05) -> void:
+        _kick = clamp(_kick - strength, -0.3, 0.0)
+        _kick_vel = -1.2 * strength * 60.0
+
+
+## Punch-in for slow-motion finishes: negative fov_offset = zoom in.
+func zoom_fov(fov_offset := -6.0, hold := 0.7) -> void:
+        _fov_target = fov_offset
+        var tree := get_tree()
+        if tree != null:
+                tree.create_timer(hold, true, false, true).timeout.connect(func() -> void:
+                        _fov_target = 0.0)
 
 
 func _shake(delta: float) -> float:

@@ -66,7 +66,7 @@ const CAST := {
 
 const FULL_RADIUS := 60.0        # full sim
 const LITE_RADIUS := 150.0       # schedule-rail sim
-const PEDESTRIAN_TARGET := 25    # ~25 peds around player (directive)
+const PEDESTRIAN_TARGET := 50    # visible ambient life around player (P1 pass; was 25)
 
 ## Named NPC runtime: id -> {pos, activity, route_from, route_to, route_t}
 var _sim := {}

@@ -21,3 +21,7 @@ Open defects. Each has status and the taxonomy — never mark a sandbox fix as d
 - D9: Key art recomposed from gameplay render; faint HUD remnants may appear behind menu scrim.
 - D10: VLM single-frame reviews oscillate (3-7 on improving content); authoritative evidence = pixel sampling + game-distance renders + automated suite.
 - D11: keyart_probe.gd world-capture path renders black (world/player async init under intro state) — key art composed from gameplay render instead.
+
+## Session 5 entries
+- D12: One storefront billboard shows streaky/smeared vertical artifacts under the Mobile renderer (VLM single-frame review). Suspect UV/mip on one emissive sign texture; verify on device before rebuilding the texture.
+- D13: Single-frame VLM review reported one pedestrian near T-pose; all anims referenced by new idle-variety code verified present on the mannequin (57/57). Likely spawn-transition frame or VLM oscillation (D10) — re-check in motion on device.

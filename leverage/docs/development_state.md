@@ -4,7 +4,15 @@
 Project root: `leverage/` (single authoritative project — no backups, no duplicates).
 Status taxonomy: **Implemented** (code exists) / **Tested** (verified by automated headless run) / **Verified** (rendered and visually confirmed) / **Device-only** (requires iPhone + XOGOT hardware; never claimed from sandbox).
 
-Last updated: 2026-11-23 (session 4 — TOTAL VISUAL OVERHAUL + living phone/GPS). **State: OVERHAUL DELIVERED (v2.0).**
+Last updated: 2026-11-23 (session 5 — COMBAT FEEL / "JUICE" PASS). **State: v2.1.0 — game feel upgraded, PCK re-exported and validated from-pack.**
+
+## Session 5 — what shipped (all in the authoritative project, no backups)
+
+1. **Combat juice (P0)**: `combat_feel.gd` static helpers — hit-stop, slow-mo, pooled impact particles. Player connects now hit-stop + camera-kick + shake + particles (scaled by damage); throws slow-mo + FOV punch-in; counters get hit-stop + sfx. Enemy brain rewritten: attack tokens (2 max), circle/flank, telegraphed wind-ups (readable counters), knockdown→lie→Roll get-up (×2 vulnerable), wounded retreat + shout, weapon reload every 3rd strike, discipline flavor. Cinematic last-enemy slow-mo finisher.
+2. **Movement/world (P1/P2)**: footsteps by gait, sprint FOV kick, ped target 25→50 with idle variety (conversations, phone poses).
+3. **Verification upgraded**: 257/257 on 4.4.1 in project dir AND from the fresh PCK. **Mobile renderer now renderable in sandbox** via user-local Mesa lavapipe Vulkan ICD (`tools/vulkan-deb/`, `VK_DRIVER_FILES=...lavapipe_icd.json`) — TDL #25; fresh Mobile-renderer gameplay capture VLM-verified.
+4. User "gray screen" report investigated: shipped v2 PCK boots + renders correctly under BOTH opengl3 and Mobile/lavapipe from the pack (probe frames VLM-verified). Likely user-side causes: loading the raw project (needs `--import` first — cache is gitignored) or first-run 77 MB PCK load time. Fresh `download/LEVERAGE_2.0.0.pck` exported & validated.
+
 
 ## Environment facts (verified)
 

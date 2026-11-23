@@ -24,6 +24,8 @@ var speed_mode := "jog"                # walk/jog/sprint/crouch
 var _anim_state := "Idle"
 var _frozen := false                  # cutscene/intro lock
 var _facing_locked := false
+var _step_t := 0.0                    # footstep phase
+var _fov_extra := 0.0                 # sprint FOV kick (smoothed)
 
 @onready var _combat: Node = null
 
@@ -108,6 +110,35 @@ func _physics_process(delta: float) -> void:
         var planar := Vector2(velocity.x, velocity.z).length()
         if planar > 0.1:
                 GameState.track_stat("distance_walked", planar * delta)
+        # footstep SFX by gait (P2 movement-feel pass)
+        _update_footsteps(delta, planar)
+        # sprint FOV kick
+        _update_fov(delta, planar)
+
+
+## Footsteps: cadence scales with gait speed; pitch variance avoids
+## machine-gun repetition. Only when grounded and moving.
+func _update_footsteps(delta: float, planar: float) -> void:
+        if planar < 0.5 or not is_on_floor():
+                _step_t = 0.0
+                return
+        var cadence: float = clamp(planar * 0.55, 0.9, 3.4)      # steps per second
+        _step_t += cadence * delta
+        if _step_t >= 1.0:
+                _step_t = 0.0
+                EventBus.sfx_requested.emit("sfx_footstep", global_position)
+
+
+## Sprint widens FOV slightly for speed feel; eases back on stop.
+func _update_fov(delta: float, planar: float) -> void:
+        var want := 0.0
+        if speed_mode == "sprint" and planar > SPRINT_SPEED * 0.7:
+                want = 6.0
+        _fov_extra = lerpf(_fov_extra, want, clamp(5.0 * delta, 0.0, 1.0))
+        var rig := camera_rig as CameraRig
+        if rig != null and rig.world_cam() != null:
+                # CameraRig owns fov (62 + own offsets); expose kick via rig
+                rig.sprint_fov = _fov_extra
 
 
 func camera_yaw() -> float:

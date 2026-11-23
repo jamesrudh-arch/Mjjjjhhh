@@ -222,6 +222,31 @@ func _resolve_hits() -> void:
                 GameState.add_discipline_xp(discipline_id, 2)
                 EventBus.hit_landed.emit(player, null, damage, "melee")
                 EventBus.sfx_requested.emit("sfx_punch_hit", player.global_position)
+                _impact_feedback(damage, knockback)
+
+
+## Impact presentation: hit-stop + camera kick + particles, scaled by the
+## damage/knockback of the landed strike (session 5 P0 combat-feel pass).
+func _impact_feedback(damage: float, knockback: float) -> void:
+        var strength: float = clamp(damage / 22.0, 0.4, 2.0)
+        var heavy: bool = knockback >= 5.0 or damage >= 22.0
+        if heavy:
+                CombatFeel.hit_stop(0.05, 0.11)
+                if player.camera_rig != null and is_instance_valid(player.camera_rig):
+                        (player.camera_rig as CameraRig).shake(0.18, 0.3)
+                        (player.camera_rig as CameraRig).kick(0.07)
+        else:
+                CombatFeel.hit_stop(0.3, 0.05)
+                if player.camera_rig != null and is_instance_valid(player.camera_rig):
+                        (player.camera_rig as CameraRig).shake(0.08, 0.16)
+                        (player.camera_rig as CameraRig).kick(0.03)
+        for node in get_tree().get_nodes_in_group("combatant"):
+                if node is Node3D and node != player and node.is_inside_tree():
+                        var to_t: Vector3 = (node.global_position - player.global_position)
+                        to_t.y = 0
+                        if to_t.length() < 2.4:
+                                CombatFeel.spawn_impact(node.global_position + Vector3(0, 1.3, 0), strength)
+                                break
 
 
 func _start_grab() -> void:
@@ -260,6 +285,11 @@ func _nearest_combatant(radius: float) -> Node:
 func _do_throw() -> void:
         var dmg: float = float(Discipline.def("grappling")["passive"].get("throw_damage", 40.0))
         player.play_anim_forced("Grapple_Throw")
+        CombatFeel.slow_mo(0.4, 0.35)
+        CombatFeel.spawn_impact(player.global_position + (-player.transform.basis.z * 1.2 + Vector3(0, 0.4, 0)), 1.8)
+        if player.camera_rig != null and is_instance_valid(player.camera_rig):
+                (player.camera_rig as CameraRig).zoom_fov(-5.0, 0.5)
+                (player.camera_rig as CameraRig).shake(0.2, 0.35)
         if _grabbed_target and is_instance_valid(_grabbed_target) and _grabbed_target.has_method("take_hit"):
                 _grabbed_target.take_hit(dmg, player, 9.0, 1.6, "Grapple_Throw")
         _grabbed_target = null
@@ -307,6 +337,12 @@ func try_counter(attacker: Node3D) -> bool:
         _counter_target = attacker
         EventBus.counter_performed.emit(player, attacker)
         GameState.add_discipline_xp(discipline_id, 8)
+        CombatFeel.hit_stop(0.12, 0.16)
+        CombatFeel.spawn_impact((attacker as Node3D).global_position + Vector3(0, 1.2, 0), 1.6)
+        EventBus.sfx_requested.emit("sfx_counter", player.global_position)
+        if player.camera_rig != null and is_instance_valid(player.camera_rig):
+                (player.camera_rig as CameraRig).shake(0.15, 0.3)
+                (player.camera_rig as CameraRig).kick(0.05)
         return true
 
 
