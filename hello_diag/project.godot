@@ -1,0 +1,17 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+config/name="LEVERAGE Hello Diag"
+config/description="Zero-dependency diagnostic project. If this renders on your device, the Xogot project-folder path works."
+run/main_scene="res://scenes/diag.tscn"
+config/features=PackedStringArray("4.4")
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/handheld/orientation=4
+
+[rendering]
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"

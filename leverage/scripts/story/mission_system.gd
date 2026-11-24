@@ -229,11 +229,15 @@ var objective_index := 0
 var objective_progress := 0       # count within current objective
 var _active_choice := {}           # pending choice
 var _history: Array = []           # completed ids
+var _m_start_ms := 0               # mission medal timing
+var _m_damage := 0.0               # mission medal damage taken
+var _m_last_hp := -1.0             # last-seen hp for damage tracking
 
 
 func _ready() -> void:
         EventBus.choice_made.connect(_on_choice_made)
         EventBus.dialogue_ended.connect(func(_n): pass)
+        EventBus.player_health_changed.connect(_track_mission_damage)
 
 
 func available_missions() -> Array:
@@ -266,6 +270,9 @@ func start_mission(id: String) -> bool:
         objective_index = 0
         objective_progress = 0
         _active_choice = {}
+        _m_start_ms = Time.get_ticks_msec()
+        _m_damage = 0.0
+        _m_last_hp = -1.0
         GameState.missions_state[id] = {"status": "active"}
         EventBus.mission_started.emit(id)
         _show_objective()
@@ -426,12 +433,47 @@ func complete_mission() -> void:
         EventBus.notification_posted.emit("Mission complete: " + String(def.get("title", active_id)), "mission")
         if money > 0:
                 EventBus.notification_posted.emit("+$%d" % money, "money")
+        _award_medal(def)
         active_id = ""
         objective_index = 0
         marker_cleared.emit()
         var nxt: String = String(def.get("next", ""))
         if nxt != "" and CAMPAIGN.has(nxt):
                 start_mission(nxt)
+
+
+## Performance medals (replay value): time vs par + damage taken.
+func _award_medal(def: Dictionary) -> void:
+        var time_s := float(Time.get_ticks_msec() - _m_start_ms) / 1000.0
+        var par := float(def.get("objectives", []).size()) * 45.0
+        if par <= 0.0:
+                par = 90.0
+        var dmg_pct := _m_damage / maxf(GameState.max_health, 1.0)
+        var medal := 1
+        if time_s <= par * 0.8 and dmg_pct <= 0.15:
+                medal = 3
+        elif time_s <= par * 1.4 and dmg_pct <= 0.40:
+                medal = 2
+        var medals: Dictionary = GameState.player_stats.get("mission_medals", {})
+        var best := int(medals.get(active_id, 0))
+        if medal > best:
+                medals[active_id] = medal
+                GameState.player_stats["mission_medals"] = medals
+                var names := {1: "BRONZE", 2: "SILVER", 3: "GOLD"}
+                EventBus.notification_posted.emit("%s MEDAL — %s" % [names.get(medal, "BRONZE"), String(def.get("title", active_id))], "reward")
+                EventBus.sfx_requested.emit("sfx_medal", Vector3.ZERO)
+                if medal == 3:
+                        GameState.player_stats["gold_medals"] = int(GameState.player_stats.get("gold_medals", 0)) + 1
+
+
+## Damage tracking for medals (hooked in _ready).
+func _track_mission_damage(hp: float, _max_hp: float) -> void:
+        if active_id == "":
+                _m_last_hp = hp
+                return
+        if _m_last_hp >= 0.0 and hp < _m_last_hp:
+                _m_damage += _m_last_hp - hp
+        _m_last_hp = hp
 
 
 ## Called by DialogueSystem when a tagged choice inside any dialogue resolves.

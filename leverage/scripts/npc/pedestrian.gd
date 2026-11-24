@@ -6,6 +6,7 @@ extends Node3D
 const WALK_SPEED := 1.5
 const FLEE_SPEED := 4.2
 const FLEE_TIME := 6.0
+const COWER_CHANCE := 0.3        # some freeze in place instead of running
 
 var actor: Node3D
 var anim: AnimationPlayer
@@ -50,6 +51,8 @@ func _process(delta: float) -> void:
                         _tick_flee(delta)
                 "idle":
                         _tick_idle(delta)
+                "cower":
+                        _tick_cower(delta)
 
 
 func _tick_walk(delta: float) -> void:
@@ -135,10 +138,37 @@ func _tick_flee(delta: float) -> void:
                 target = NPCDirector.pedestrian_walk_target(global_position)
 
 
-func _start_flee() -> void:
+func _start_flee(force_mode := "") -> void:
+        # panic is loud: a scream sells the danger better than silent jogging
+        EventBus.sfx_requested.emit("sfx_ped_scream", global_position)
+        var mode := force_mode
+        if mode == "":
+                mode = "cower" if randf() < COWER_CHANCE else "flee"
+        if mode == "cower":
+                _state = "cower"
+                _flee_t = FLEE_TIME * 1.5
+                if anim:
+                        _play("Crouch_Idle") if anim.has_animation("Crouch_Idle") else _play("Idle")
+                return
         _state = "flee"
         _flee_t = FLEE_TIME
         _play("Jog_Fwd")
+
+
+## Frozen-in-fear state: stays put, then recovers to walking.
+func _tick_cower(delta: float) -> void:
+        _flee_t -= delta
+        # face away from the danger while crouched
+        var player := get_tree().get_first_node_in_group("player") as Node3D
+        if player != null:
+                var away: Vector3 = global_position - player.global_position
+                away.y = 0.0
+                if away.length_squared() > 0.01:
+                        rotation.y = atan2(away.x, away.z)
+        if _flee_t <= 0.0:
+                _state = "walk"
+                _play("Walk")
+                target = NPCDirector.pedestrian_walk_target(global_position)
 
 
 func _close_to_danger() -> bool:

@@ -9,7 +9,7 @@ config_version=5
 
 config/name="LEVERAGE"
 config/description="Everyone has leverage on you. A third-person open-world crime-action drama set in Cinder City."
-config/version="2.2.0"
+config/version="2.4.0"
 run/main_scene="res://scenes/boot/boot.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 boot_splash/show_image=false
@@ -24,6 +24,7 @@ InputRouter="*res://scripts/core/input_router.gd"
 AudioSystem="*res://scripts/core/audio_system.gd"
 TimeWeather="*res://scripts/world/time_weather.gd"
 WorldEvents="*res://scripts/world/world_events.gd"
+StreetEncounters="*res://scripts/world/street_encounters.gd"
 CityDirector="*res://scripts/world/city_director.gd"
 NPCDirector="*res://scripts/npc/npc_director.gd"
 PoliceSystem="*res://scripts/police/police_system.gd"

@@ -103,7 +103,7 @@ func _add_menu_buttons() -> void:
         var cr := LvgTheme.make_button("CREDITS")
         cr.pressed.connect(func(): _show_credits())
         _v.add_child(cr)
-        var ver := LvgTheme.make_label("v2.3.0  |  D'YOUNGS GAMES  |  Mobile renderer, XOGOT-ready PCK", 20, LvgTheme.TEXT_DIM)
+        var ver := LvgTheme.make_label("v2.4.0  |  D'YOUNGS GAMES  |  Mobile renderer, XOGOT-ready", 20, LvgTheme.TEXT_DIM)
         _v.add_child(ver)
 
 

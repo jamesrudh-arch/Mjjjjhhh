@@ -1,0 +1,32 @@
+LEVERAGE HELLO DIAG — 30-second delivery-chain test
+=====================================================
+
+This is a ZERO-dependency Godot project (no textures, meshes, audio or
+autoloads). It exists for exactly one reason: to prove the delivery chain
+to your device works, independently of the main game.
+
+WHAT TO DO (same as the main game)
+1. In the iPhone Files app, tap LEVERAGE_hello_diag_project.zip ONCE to
+   extract it (open the extracted FOLDER, never the zip itself).
+2. Open Xogot -> open that folder (or its project.godot). If it warns about
+   the Godot version, tap Continue.
+3. Press PLAY.
+
+WHAT YOU SHOULD SEE (within ~5 seconds)
+- Dark slate background, a big title "LEVERAGE HELLO DIAG"
+- A colored band near the bottom that continuously changes hue
+- Lines reading: "If you can read this, the project-folder path works...",
+  a Godot/renderer/OS line, and an fps counter that keeps updating.
+
+HOW TO READ THE RESULT
+- HELLO WORKS, MAIN GAME FAILS  -> problem is inside the game on your
+  device: send the Xogot Output pane lines (they start with
+  "[LEVERAGE v2.4.0] boot start"). Also send iPhone model + iOS + Xogot
+  version.
+- HELLO ALSO FAILS (gray/black) -> the problem is the delivery/open step,
+  not the game: check you opened the extracted FOLDER in Xogot (not the
+  zip, not a .pck), and that the transfer finished (compare the zip's size
+  and SHA-256 in CHECKSUMS.txt with what you received).
+- Everything works -> delete this diag project and enjoy LEVERAGE.
+
+Desktop (optional): any Godot 4.4-4.7 can run it: godot --path hello_diag

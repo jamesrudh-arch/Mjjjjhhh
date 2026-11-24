@@ -5,6 +5,11 @@
 # Local tool installs & raw asset downloads (1.8 GB; see leverage/docs/asset_register.md for sources)
 tools/
 
+# Scratch working area, tool outputs, user uploads (never ship)
+scratch/
+tool-results/
+upload/
+
 # Godot import cache (regenerable by the editor)
 .godot/
 *.godot/
@@ -22,3 +27,6 @@ skills/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# XOGOT project zips exceed GitHub's 100 MB file cap — sandbox download/ delivery only
+download/*XOGOT_project.zip

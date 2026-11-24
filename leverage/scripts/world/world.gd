@@ -23,6 +23,9 @@ var _pedestrians: Array = []
 var _npc_agents := {}                  # npc_id -> NamedNpcAgent
 var _police_units: Array = []
 var _mission_enemies: Array = []
+var _encounter_units: Array = []      # street-encounter combatants (v2.4.0)
+var _encounter_peds: Array = []        # brawl pair
+var _stash_node: Node3D = null        # dropped-stash pickup visual
 var _markers: Array = []
 var _lamp_lights: Array = []
 var _night_materials: Array = []      # building materials w/ emission ramp
@@ -396,6 +399,16 @@ func _spawn_mission_enemies(mission_id: String, wave: Dictionary) -> void:
 
 
 func _check_wave_cleared(enemy: Node) -> void:
+        if enemy is Combatant and String(str(enemy.get_meta("encounter_id", ""))) != "":
+                # street-encounter fight: all down -> director resolves the reward
+                var eid := String(str(enemy.get_meta("encounter_id", "")))
+                var alive := 0
+                for e in _encounter_units:
+                        if is_instance_valid(e) and String(str(e.get_meta("encounter_id", ""))) == eid and (e as Combatant)._state != "dead":
+                                alive += 1
+                if alive == 0:
+                        StreetEncounters.notify_fight_cleared()
+                return
         if enemy is Combatant and (enemy as Combatant).wave_id() != "":
                 var wave_id: String = (enemy as Combatant).wave_id()
                 var alive := 0
@@ -484,6 +497,13 @@ func _wire_police() -> void:
 
 
 func _spawn_police(kind: String, position: Vector3, level: int) -> void:
+        if kind == "air_unit":
+                var au := AirUnit.new()
+                au.position = position + Vector3(0, 30, 0)
+                add_child(au)
+                _police_units.append(au)
+                EventBus.notification_posted.emit("Air unit inbound — find cover", "crime")
+                return
         var u := PoliceUnit.new()
         u.setup_police(kind, level)
         u.position = position + Vector3(_rng.randf_range(-8, 8), 0.2, _rng.randf_range(-8, 8))
@@ -528,6 +548,8 @@ func _wire_events() -> void:
         EventBus.world_event_started.connect(func(eid, area):
                 if eid == "neon_blackout" and city:
                         pass)
+        StreetEncounters.encounter_started.connect(_spawn_encounter)
+        StreetEncounters.encounter_ended.connect(_end_encounter_visuals)
 
 
 func _wire_audio() -> void:
@@ -545,6 +567,7 @@ func _process(delta: float) -> void:
         _maintain_named_npcs()
         _maintain_police(delta)
         _maintain_collectibles()
+        _maintain_encounters(delta)
         if _intro == null or not is_instance_valid(_intro):
                 pass
 
@@ -669,23 +692,109 @@ func _maintain_police(delta: float) -> void:
         var plan: Array = PoliceSystem.patrol_plan()
         var want_foot := 0
         var want_cruiser := 0
+        var want_air := 0
         for p in plan:
                 if String(p.get("kind", "")) == "foot_patrol":
                         want_foot = int(p.get("count", 0))
                 elif String(p.get("kind", "")) == "cruiser":
                         want_cruiser = int(p.get("count", 0))
+                elif String(p.get("kind", "")) == "air_unit":
+                        want_air = int(p.get("count", 0))
         var foot := 0
+        var air := 0
         for u in _police_units:
                 if u is PoliceUnit:
                         foot += 1
+                elif u is AirUnit:
+                        air += 1
         if foot < want_foot and _rng.randf() < 0.02:
                 var anchor := CityDirector.patrol_anchor(CityDirector.current_area)
                 _spawn_police("foot_patrol", Vector3(anchor.x, 0, anchor.y), GameState.wanted_level)
         if want_cruiser > 0 and _rng.randf() < 0.01:
                 _spawn_police("cruiser", player.global_position + Vector3(_rng.randf_range(-60, 60), 0, _rng.randf_range(-60, 60)), GameState.wanted_level)
+        # 5-star climax: the air unit joins the pursuit
+        if want_air > air and _rng.randf() < 0.03:
+                _spawn_police("air_unit", player.global_position, 5)
         # remove when calm
         if GameState.wanted_level == 0 and not _police_units.is_empty():
                 _clear_police()
+
+
+## ---------------- street encounters (v2.4.0) ----------------
+func _spawn_encounter(eid: String, pos: Vector3, _area: String) -> void:
+        var def: Dictionary = StreetEncounters.encounter_def(eid)
+        if def.is_empty():
+                return
+        match String(def.get("kind", "")):
+                "combat":
+                        var n := int(def.get("enemies", 1))
+                        var label := "Vetch Muscle" if eid == "street_mugging" else "Dealer"
+                        for i in n:
+                                var e := Combatant.new()
+                                e.setup("", "vetch", label, float(def.get("hp", 60.0)), float(def.get("dmg", 8.0)), "brawler")
+                                e.position = pos + Vector3(_rng.randf_range(-5, 5), 0.2, _rng.randf_range(-5, 5))
+                                e.set_meta("encounter_id", eid)
+                                add_child(e)
+                                _encounter_units.append(e)
+                "ambient":
+                        # two fighters going at it; they scatter when the player closes in
+                        for i in 2:
+                                var p := PedestrianAgent.new()
+                                p.position = pos + Vector3(2.0 * float(i) - 1.0, 0, 0)
+                                p.set_meta("brawler", true)
+                                add_child(p)
+                                _encounter_peds.append(p)
+                "pickup":
+                        _spawn_stash(pos)
+
+
+func _spawn_stash(pos: Vector3) -> void:
+        var stash := Node3D.new()
+        stash.position = pos
+        var box := MeshInstance3D.new()
+        var m := BoxMesh.new()
+        m.size = Vector3(0.5, 0.22, 0.35)
+        box.mesh = m
+        var mat := StandardMaterial3D.new()
+        mat.albedo_color = Color(0.9, 0.75, 0.25)
+        mat.emission_enabled = true
+        mat.emission = Color(0.95, 0.7, 0.2)
+        mat.emission_energy_multiplier = 2.2
+        box.material_override = mat
+        stash.add_child(box)
+        var glow := OmniLight3D.new()
+        glow.omni_range = 6.0
+        glow.light_color = Color(0.95, 0.7, 0.2)
+        stash.add_child(glow)
+        stash.add_to_group("encounter_stash")
+        add_child(stash)
+        _stash_node = stash
+
+
+func _maintain_encounters(_delta: float) -> void:
+        # dropped stash: player walks onto it
+        if _stash_node != null and is_instance_valid(_stash_node) and player != null:
+                if player.global_position.distance_to(_stash_node.global_position) < 2.2:
+                        _stash_node.queue_free()
+                        _stash_node = null
+                        StreetEncounters.notify_pickup_reached()
+        # brawl pair scatter when the player closes in
+        for p in _encounter_peds:
+                if is_instance_valid(p) and player != null:
+                        if p.global_position.distance_to(player.global_position) < 6.0 and String(p._state) == "idle":
+                                p._start_flee()
+        _encounter_units = _encounter_units.filter(func(e): return is_instance_valid(e))
+        _encounter_peds = _encounter_peds.filter(func(p): return is_instance_valid(p))
+
+
+func _end_encounter_visuals(eid: String, _outcome: String) -> void:
+        for e in _encounter_units:
+                if is_instance_valid(e) and String(str(e.get_meta("encounter_id", ""))) == eid:
+                        e.queue_free()
+        _encounter_units = _encounter_units.filter(func(e): return is_instance_valid(e) and String(str(e.get_meta("encounter_id", ""))) != eid)
+        if _stash_node != null and is_instance_valid(_stash_node) and not StreetEncounters.is_active("dropped_stash"):
+                _stash_node.queue_free()
+                _stash_node = null
 
 
 func _maintain_collectibles() -> void:

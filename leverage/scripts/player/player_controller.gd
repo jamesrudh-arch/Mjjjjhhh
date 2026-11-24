@@ -103,9 +103,10 @@ func _physics_process(delta: float) -> void:
         _update_interact_prompt()
         # drive animation
         _drive_animation(delta)
-        # police + missions track position
+        # police + missions + encounters track position
         PoliceSystem.set_player_position(global_position)
         MissionSystem.notify_at_position(global_position)
+        StreetEncounters.set_player_position(global_position)
         # distance stats
         var planar := Vector2(velocity.x, velocity.z).length()
         if planar > 0.1:

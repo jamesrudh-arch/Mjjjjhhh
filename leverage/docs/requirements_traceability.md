@@ -37,5 +37,8 @@ Directive requirement → implementation → status. Status values: Implemented 
 | R31 | Full pre-delivery audit | delivery_report.md | **Done** |
 | R32 | Final delivery report with Device-only disclosure | delivery_report.md + packaged zip | **Done** |
 | R33 | No reuse of other AI agents' implementations | original GDScript + CC0 assets | **Verified** |
+| R34 | Emergent street encounters during free-roam (world-class "alive city" upgrade, session-10 research) | scripts/world/street_encounters.gd + world.gd visuals; encounters.sim suite | **Tested** (12/12; 379/379 both engines) |
+| R35 | Wanted-evasion tension loop (searching stars, EVADED payoff) + 5-star air pursuit unit | police_system.gd is_searching + hud.gd blink/flash + air_unit.gd; police.evasion + police.air suites | **Tested** (13/13; VLM render battery unaffected) |
+| R36 | Mission performance medals + ped panic audio/behavior + engine-loop audio regression | mission_system.gd _award_medal, pedestrian.gd cower/scream, audio_system.gd make_looping_spatial; missions.medals + peds.panic + audio.sfx suites | **Tested** (16/16) |
 
 Update rule: statuses only move forward with evidence; regressions get a Known Defects row instead.

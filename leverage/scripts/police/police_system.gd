@@ -15,6 +15,7 @@ signal roadblock_requested(position: Vector3)
 signal siren_state_changed(active: bool)
 
 var pursuit_active := false
+var _searching := false             # pursuit live but no line-of-sight (stars blink)
 var _seen_timer := 0.0            # time since police had LOS
 var _los_check_accum := 0.0
 var _player_pos := Vector3.ZERO
@@ -45,12 +46,15 @@ func _process(delta: float) -> void:
                 if _los_check_accum >= 0.5:
                         _los_check_accum = 0.0
                         var seen := _police_have_los()
+                        _searching = not seen
                         if seen:
                                 _seen_timer = 0.0
                         else:
                                 _seen_timer += 0.5
                                 if _seen_timer >= SEEN_DECAY_TIME:
                                         _lose_level("lost sight")
+        else:
+                _searching = false
         # Roadblock maintenance
         if GameState.wanted_level >= ROADBLOCK_LEVEL and _roadblock_spots.size() == 0:
                 _spawn_roadblock()
@@ -121,6 +125,11 @@ func report_sighting() -> void:
                 pursuit_active = true
 
 
+## Pursuit is live but units have no line of sight (HUD blinks the stars).
+func is_searching() -> bool:
+        return pursuit_active and GameState.wanted_level > 0 and _searching
+
+
 ## Report the player fully evaded (e.g. hidden long enough).
 func report_lost() -> void:
         _lose_level("lost sight")
@@ -128,12 +137,16 @@ func report_lost() -> void:
 
 func _lose_level(reason: String) -> void:
         if GameState.wanted_level > 0:
+                var was_pursued := pursuit_active
                 _set_wanted(GameState.wanted_level - 1, reason)
                 GameState.heat = clamp(GameState.heat * 0.6, 0.0, 100.0)
                 _seen_timer = 0.0
                 if GameState.wanted_level == 0:
                         EventBus.police_lost_target.emit()
                         _sirens_on(false)
+                        if was_pursued:
+                                # evasion payoff: stinger where the player is
+                                EventBus.sfx_requested.emit("sfx_wanted_clear", _player_pos if _player_pos_valid else Vector3.ZERO)
 
 
 ## Busted: called when an officer reaches the player at low health or player surrenders.
@@ -202,6 +215,7 @@ func patrol_plan() -> Array:
                 out.append({"kind": "tactical", "count": 2})
         if lvl >= 5:
                 out.append({"kind": "tactical", "count": 3})
+                out.append({"kind": "air_unit", "count": 1})
         return out
 
 

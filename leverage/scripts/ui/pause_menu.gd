@@ -38,7 +38,7 @@ func _build() -> void:
                         txt += "  -  Day %d, %s, $%d" % [int(meta.get("chapter", 1)), String(meta.get("area", "?")), int(meta.get("money", 0))]
                 row.add_child(LvgTheme.make_label(txt, 24, LvgTheme.TEXT))
                 var save_b := LvgTheme.make_button("SAVE")
-                var s_idx := slot
+                var s_idx: int = slot
                 save_b.pressed.connect(func():
                         SaveSystem.capture_world_state()
                         if SaveSystem.save_game(s_idx):

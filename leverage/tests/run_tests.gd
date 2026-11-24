@@ -21,12 +21,36 @@ func _ready() -> void:
         check("AudioSystem autoload", AudioSystem != null)
         check("TimeWeather autoload", TimeWeather != null)
         check("WorldEvents autoload", WorldEvents != null)
+        check("StreetEncounters autoload", StreetEncounters != null)
         check("CityDirector autoload", CityDirector != null)
         check("NPCDirector autoload", NPCDirector != null)
         check("PoliceSystem autoload", PoliceSystem != null)
         check("MissionSystem autoload", MissionSystem != null)
         check("DialogueSystem autoload", DialogueSystem != null)
         check("GameManager autoload", GameManager != null)
+
+        # Suite 0a: EVERY game script must compile in the real runtime (autoload
+        # context). Regression net: v2.3.1 shipped phone.gd (C-style ternary)
+        # and pause_menu.gd (untyped := inference) as parse errors that only
+        # surfaced on device load.
+        suite("scripts.parse")
+        var script_paths: Array = []
+        _collect_gd("res://scripts", script_paths)
+        var compiled := 0
+        for p in script_paths:
+                var s: Variant = load(String(p))
+                if s != null and s is Resource:
+                        compiled += 1
+                check("script compiles: %s" % String(p).replace("res://scripts/", ""), s != null)
+        if script_paths.is_empty():
+                # pack mode: DirAccess enumeration is unavailable in a PCK;
+                # load the historically-broken scripts explicitly instead.
+                for p in ["res://scripts/ui/phone.gd", "res://scripts/ui/pause_menu.gd",
+                                "res://scripts/ui/hud.gd", "res://scripts/boot/boot.gd"]:
+                        check("script loads from pack: %s" % String(p).replace("res://scripts/", ""), load(p) != null)
+        else:
+                check("script count >= 40", script_paths.size() >= 40)
+                check("all scripts compiled", compiled == script_paths.size())
 
         # Suite 0b: real opening flow (D'YOUNGS GAMES -> title -> notice)
         suite("boot.flow")
@@ -490,6 +514,16 @@ func _ready() -> void:
         await get_tree().create_timer(0.2).timeout
         check("radio off restored", AudioSystem.radio_status()["station"] == "off")
 
+        # v2.4.0 audit fix regression: vehicle engine loop must actually load
+        # (old path pointed at a nonexistent engine_loop.wav - silent vehicles)
+        var eng_loop := AudioSystem.make_engine_loop()
+        check("engine loop stream loads", eng_loop != null and eng_loop.stream != null)
+        check("engine loop is looping", (eng_loop.stream as AudioStreamOggVorbis).loop)
+        var heli_loop := AudioSystem.make_looping_spatial("sfx_heli_loop")
+        check("heli loop stream loads", heli_loop != null and heli_loop.stream != null)
+        for sfx_id in ["sfx_ped_scream", "sfx_wanted_clear", "sfx_medal", "sfx_heli_loop"]:
+                check("sfx asset present: " + sfx_id, AudioSystem._get_sfx(sfx_id) != null)
+
         # Suite 18: touch controls construction
         suite("ui.touch")
         check("touch controls built", world.touch != null and world.touch._buttons.size() >= 4)
@@ -565,6 +599,130 @@ func _ready() -> void:
         check("second route multi-hop", route2.size() >= 4)
         map_scr.queue_free()
 
+        # ---- v2.4.0 "Alive City" upgrade suites ----
+        # Suite: emergent street encounters (RDR2-style director)
+        suite("encounters.sim")
+        StreetEncounters.set_seed(4242)
+        var enc_defs_ok := true
+        for eid in StreetEncounters.ENCOUNTERS.keys():
+                var ed: Dictionary = StreetEncounters.ENCOUNTERS[eid]
+                if not ed.has("kind") or not ed.has("weight") or not ed.has("title") or float(ed.get("weight", 0.0)) <= 0.0:
+                        enc_defs_ok = false
+        check("encounter defs complete", enc_defs_ok)
+        check("four encounter archetypes", StreetEncounters.ENCOUNTERS.size() == 4)
+        check("both combat kinds exist", StreetEncounters.encounter_def("street_mugging").get("enemies", 0) >= 1 and StreetEncounters.encounter_def("drug_deal").get("enemies", 0) >= 2)
+        var enc_started: Array = []
+        StreetEncounters.encounter_started.connect(func(eid, pos, area): enc_started.append([eid, pos, area]))
+        StreetEncounters.set_player_position(Vector3(10, 0, 10))
+        check("explicit start works", StreetEncounters.start_encounter("street_mugging"))
+        await get_tree().process_frame
+        check("encounter registered active", StreetEncounters.is_active("street_mugging"))
+        check("signal carried id+area", enc_started.size() == 1 and String(enc_started[0][0]) == "street_mugging")
+        var money_enc := GameState.money
+        StreetEncounters.resolve("street_mugging", "won")
+        check("won pays money", GameState.money > money_enc)
+        check("encounters_won stat tracked", int(GameState.player_stats.get("encounters_won", 0)) >= 1)
+        check("resolved no longer active", not StreetEncounters.is_active("street_mugging"))
+        # grabbed stash emits a real crime (witnesses matter)
+        var crime_log: Array = []
+        EventBus.crime_committed.connect(func(t, p, s, w): crime_log.append([t, p, s, w]))
+        StreetEncounters.start_encounter("dropped_stash")
+        StreetEncounters.notify_pickup_reached()
+        check("stash grab emits crime", crime_log.size() == 1 and String(crime_log[0][0]) == "property_theft")
+        check("crime carries witnesses", (crime_log[0][3] as Array).size() >= 1)
+        # expiry by timeout
+        StreetEncounters.start_encounter("street_brawl")
+        StreetEncounters.debug_advance(160.0)
+        check("encounters expire by lifetime", not StreetEncounters.is_active("street_brawl"))
+        # cooldown blocks immediate reroll
+        StreetEncounters.set_player_position(Vector3(0, 0, 0))
+        StreetEncounters.force_roll()
+        check("cooldown blocks reroll", StreetEncounters.active_encounters().size() == 0)
+        check("stats record seen", int(StreetEncounters.stats()["seen"]) >= 3)
+
+        # Suite: wanted-evasion loop (searching stars + evaded payoff)
+        suite("police.evasion")
+        check("searching false when calm", not PoliceSystem.is_searching())
+        GameState.wanted_level = 0
+        GameState.heat = 0.0
+        EventBus.player_wanted_changed.emit(0)
+        PoliceSystem._recompute_pursuit()
+        GameState.wanted_level = 2
+        EventBus.player_wanted_changed.emit(2)
+        PoliceSystem._recompute_pursuit()
+        PoliceSystem.set_player_position(Vector3(9999, 0, 9999))  # far from roads = no LOS
+        PoliceSystem._process(1.0)
+        check("searching true while unseen", PoliceSystem.is_searching())
+        var lost_flag: Array = []
+        EventBus.police_lost_target.connect(func(): lost_flag.append(1))
+        var clear_sfx: Array = []
+        EventBus.sfx_requested.connect(func(id, p): clear_sfx.append(id))
+        for i in 60:
+                PoliceSystem._process(1.0)  # 60 unseen checks >> 2 x SEEN_DECAY_TIME
+        check("pursuit decays when unseen", GameState.wanted_level == 0)
+        check("police_lost_target fired", lost_flag.size() > 0)
+        check("evasion stinger requested", clear_sfx.has("sfx_wanted_clear"))
+        PoliceSystem._recompute_pursuit()
+
+        # Suite: pedestrian panic (scream + cower)
+        suite("peds.panic")
+        var scream_log: Array = []
+        EventBus.sfx_requested.connect(func(id, p): scream_log.append(id))
+        var ped := PedestrianAgent.new()
+        add_child(ped)
+        await get_tree().process_frame
+        check("pedestrian spawns", ped.actor != null)
+        ped._start_flee("flee")
+        check("flee screams", scream_log.has("sfx_ped_scream"))
+        check("flee state entered", String(ped._state) == "flee")
+        ped._start_flee("cower")
+        check("cower state entered", String(ped._state) == "cower")
+        ped._tick_cower(99.0)
+        check("cower recovers to walk", String(ped._state) == "walk")
+        ped.queue_free()
+
+        # Suite: 5-star air unit
+        suite("police.air")
+        GameState.wanted_level = 0
+        check("no air unit when calm", not PoliceSystem.patrol_plan().any(func(p): return String(p.get("kind", "")) == "air_unit"))
+        GameState.wanted_level = 5
+        var air_plan := PoliceSystem.patrol_plan()
+        check("air unit in 5-star plan", air_plan.any(func(p): return String(p.get("kind", "")) == "air_unit"))
+        var au := AirUnit.new()
+        add_child(au)
+        au.global_position = Vector3(0, 30, 0)
+        await get_tree().process_frame
+        check("air unit builds body+light", au._spot != null and au._rotor != null)
+        au._process(0.5)
+        au._process(0.5)
+        var player_node := get_tree().get_first_node_in_group("player") as Node3D
+        if player_node != null:
+                check("air unit orbits player height band", absf(au.global_position.y - player_node.global_position.y - 30.0) < 12.0)
+        PoliceSystem._seen_timer = 5.0
+        au._process(3.0)
+        check("air unit reports sighting", PoliceSystem._seen_timer < 5.0)
+        GameState.wanted_level = 2
+        au._process(4.0)
+        check("air unit leaves below 5 stars", au.is_queued_for_deletion())
+        GameState.wanted_level = 0
+
+        # Suite: mission medals
+        suite("missions.medals")
+        check("medal stats initialized", GameState.player_stats.has("mission_medals") and GameState.player_stats.has("gold_medals"))
+        var m_id := "debt_first"
+        check("campaign mission found", not MissionSystem.mission_def(m_id).is_empty())
+        MissionSystem.start_mission(m_id)
+        MissionSystem._m_start_ms = Time.get_ticks_msec() - 10_000       # fast run
+        MissionSystem._m_damage = 2.0                                    # low damage
+        MissionSystem.complete_mission()
+        check("gold medal awarded", int(GameState.player_stats["mission_medals"].get(m_id, 0)) == 3)
+        check("gold_medals stat counted", int(GameState.player_stats["gold_medals"]) >= 1)
+        MissionSystem.start_mission(m_id)
+        MissionSystem._m_start_ms = Time.get_ticks_msec() - 900_000      # slow run
+        MissionSystem._m_damage = 90.0                                   # heavy damage
+        MissionSystem.complete_mission()
+        check("best medal retained on worse replay", int(GameState.player_stats["mission_medals"].get(m_id, 0)) == 3)
+
         # finish: tear down world
         world.queue_free()
         await get_tree().process_frame
@@ -620,6 +778,21 @@ func _count_group(world: Node, group: String) -> int:
                         n += c.get_tree().get_nodes_in_group(group).size()
                         break
         return get_tree().get_nodes_in_group(group).size()
+
+
+func _collect_gd(dir_path: String, out: Array) -> void:
+        var d := DirAccess.open(dir_path)
+        if d == null:
+                return
+        d.list_dir_begin()
+        var name_ := d.get_next()
+        while name_ != "":
+                if d.current_is_dir() and not name_.begins_with("."):
+                        _collect_gd(dir_path.path_join(name_), out)
+                elif name_.ends_with(".gd"):
+                        out.append(dir_path.path_join(name_))
+                name_ = d.get_next()
+        d.list_dir_end()
 
 
 func _failed_count() -> int:

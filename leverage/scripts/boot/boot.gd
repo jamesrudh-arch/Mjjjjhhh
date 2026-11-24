@@ -18,9 +18,22 @@ var _test_mode := OS.get_environment("LEVERAGE_TEST") == "1"
 
 func _ready() -> void:
         get_window().title = "LEVERAGE"
+        print_diag()
         _build()
         GameManager.go_to_state(GameManager.State.SPLASH)
         EventBus.game_booted.emit()
+
+
+## One-line device diagnostics: lands in Xogot's debugger Output pane, so a
+## real-device launch failure tells us exactly how far boot got.
+func print_diag() -> void:
+        var vi := Engine.get_version_info()
+        print("[LEVERAGE v%s] boot start | Godot %s | renderer=%s | OS=%s | mem=%d MB" % [
+                ProjectSettings.get_setting("application/config/version", "?"),
+                vi.get("string", "?"),
+                ProjectSettings.get_setting("rendering/renderer/rendering_method", "?"),
+                OS.get_name(),
+                OS.get_static_memory_usage() / 1048576])
 
 
 func _build() -> void:
@@ -147,4 +160,5 @@ func _go_menu() -> void:
         # only hand over the tree when boot is the root scene; embedded copies
         # (tests, previews) simply finish their timeline instead.
         if get_tree().current_scene == self:
+                print("[LEVERAGE] boot cards done -> main menu")
                 get_tree().change_scene_to_file("res://scenes/menus/main_menu.tscn")

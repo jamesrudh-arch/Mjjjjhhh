@@ -312,11 +312,20 @@ func _get_sfx(sfx_id: String) -> AudioStream:
 
 
 # Engine loop helpers for vehicles (pitched loop handled by vehicle scripts).
+# v2.4.0 audit fix: the old path pointed at a nonexistent "engine_loop.wav" —
+# vehicles have been silent since the .ogg conversion; loads the real asset now.
 func make_engine_loop() -> AudioStreamPlayer3D:
+        return make_looping_spatial("sfx_engine_loop", 60.0)
+
+
+## Looping one-owner spatial stream (helicopter rotor, engine hums).
+func make_looping_spatial(sfx_id: String, max_dist: float = 80.0) -> AudioStreamPlayer3D:
         var p := AudioStreamPlayer3D.new()
         p.bus = "SFX"
-        p.max_distance = 60.0
-        var path: String = SFX_DIR + "engine_loop.wav"
-        if ResourceLoader.exists(path):
-                p.stream = load(path)
+        p.max_distance = max_dist
+        var stream: AudioStream = _get_sfx(sfx_id)
+        if stream is AudioStreamOggVorbis:
+                var ogg := stream as AudioStreamOggVorbis
+                ogg.loop = true
+                p.stream = ogg
         return p

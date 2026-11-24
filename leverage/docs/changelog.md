@@ -1,5 +1,26 @@
 # LEVERAGE — Changelog
 
+## 2026-11-24 (session 11 — v2.4.0 re-verified + delivery hardened; no game-code changes)
+- Full audit-test-verify re-run from scratch on the v2.4.0 tree (sandbox had recycled; Godot 4.4.1 + 4.7.2 + lavapipe restored): 379/379 on both engines (fresh imports), 335/335 from the re-exported 44.16 MB PCK, real-boot render battery + VLM on 4.7.2 (menu + gameplay frames clean), world_shot gameplay evidence.
+- **Corrected the session-10 delivery report's false claim**: v2.4.0 was never actually committed ("cdb7380" does not exist — reflog ends at v2.3.1). v2.4.0 + artifacts committed for real this session.
+- New `hello_diag/` zero-dependency diagnostic project (5.8 KB zip) — isolates the delivery chain from the game on the user's device; VLM-verified render + extracted-zip instant boot on 4.7.2.
+- Deliverables rebuilt from the verified tree (XOGOT zip 106,802,448 B with 4.7.2-native cache, PCK 44,159,440 B), `download/CHECKSUMS.txt` (sha256 + bytes), stale v2.3.x artifacts purged.
+- D22 tooling note: --check-only audits can't resolve autoloads (false compile errors, both engines, same as session 10) — the suite is the authoritative compile gate.
+
+## v2.4.0 — "Alive City" upgrade pass (session 10, 2026-11-24)
+Full user-directed audit-test-verify-audit run first: fresh-sandbox re-verification of v2.3.2 before any change (334/334 on 4.4.1 fresh import, 334/334 on 4.7.2 fresh import, 292/0 from-pack, full real-flow render battery non-black on 4.7.2 — zero assumptions carried). Audit then found five excitement gaps vs the world-class bar and one real audio defect; all closed this session:
+
+- **Street encounters (RDR2-style emergent events)**: new `StreetEncounters` director (autoload) rolls weighted random encounters during free-roam — street mugging (break it up: fight + cash + rep), drug deal (two armed dealers, bigger stake), bar brawl (ambient, scatters as you close), dropped stash (grab = money + a witnessed crime that feeds the police heat system). Gating: no missions/combat/interiors/chase; cooldown 75 s; night + high-crime areas roll hotter; lifetime/abandon expiry. World scene instantiates combatants/pickup visuals via the PoliceSystem signal pattern. 12-check suite `encounters.sim`.
+- **Wanted-evasion loop**: `is_searching()` pursuit-with-no-LOS state — HUD stars BLINK while police hunt blind (GTA-style escape tension); `_lose_level` to 0 now fires the evasion payoff: `police_lost_target` → HUD "WANTED LEVEL CLEARED — EVADED" flash + `sfx_wanted_clear` stinger. 7-check suite `police.evasion`.
+- **5-star air pursuit**: `AirUnit` police helicopter (code-built mesh — boxes/cylinders/spinning rotor, no asset pipeline) orbits 30 m over the player with a tracking SpotLight3D + blinking nav light + looping rotor thump (`sfx_heli_loop`, new); reports sightings every 2.5 s so escaping 5 stars needs real cover; self-despawns below level 5. patrol_plan(5) adds `air_unit`; world spawns/despawns it. 6-check suite `police.air`.
+- **Mission medals (replay value)**: every mission scores time-vs-par + damage-taken → BRONZE/SILVER/GOLD, best retained across replays, gold count in stats, fanfare `sfx_medal` + notification. 4-check suite `missions.medals`.
+- **Pedestrian panic**: flee now SCREAMS (`sfx_ped_scream`), and ~30% of peds freeze in a cower instead of running (Crouch_Idle fallback Idle), recovering after the danger passes. 5-check suite `peds.panic`.
+- **D20 (audit find, closed)**: `make_engine_loop()` loaded a nonexistent `engine_loop.wav` — vehicles have been engine-silent since the .ogg conversion. Now loads `sfx_engine_loop.ogg` as a true looping stream (`make_looping_spatial`); regression checks added (`audio.sfx` block).
+- **D21 (audit find, closed)**: `tests/render_out/*` probe PNGs leaked into the PCK whenever a render probe had run before export (TDL #30's `docs/*` filter didn't cover them; +1.9 MB observed this session). `exclude_filter="docs/*,tests/render_out/*"` + re-export; PCK 46.09 → 44.16 MB.
+- New SFX (all original numpy DSP, `scripts/audio_gen_v240.py` → .ogg pipeline): `sfx_ped_scream`, `sfx_wanted_clear`, `sfx_heli_loop`, `sfx_medal`.
+- Version bumped everywhere (project.godot, main menu label). Boot card prints engine/renderer/OS as before.
+- **Verification**: 379/379 on Godot 4.4.1 (fresh import) AND 4.7.2 = Xogot's engine (fresh import); 335/0 from the re-exported 44.16 MB PCK (D21 filter applied); full real-flow render battery on 4.7.2 (boot cards → menu v2.4.0 → intro → world gameplay; all frames non-black) + VLM-verified menu and gameplay frames (docs/evidence/session10/). Zero SCRIPT ERRORs in any run.
+
 ## 2026-11-23 (session 1)
 - Environment investigation completed; Godot 4.7.2 + 4.4.1 + Blender 4.5.9 staged in tools/.
 - Project skeleton created (project.godot, Mobile renderer, 4.4 feature set, input map incl. fixed X/Y/A/B).
@@ -168,3 +189,63 @@
 - D16 recorded: single-frame VLM verdicts on dark glossy vehicle close-ups
   oscillate; objective clay-silhouette solidity (0.838) + byte-identical
   geometry vs v2.1.0 + old/new A/B equality prove no vehicle regression.
+
+## v2.3.1 — Gray-Screen Root Cause Closed: Delivery Format (session 8, 2026-11-24)
+
+### The bug was in the delivery, not the game
+- Fresh research (App Store listing + xogot.com, Nov 2026): **Xogot is the
+  Godot EDITOR for iPad/iPhone (Xibbon, App Store `id6469385251`), embedding
+  Godot 4.7** — it opens Godot project folders from Files/iCloud/USB/GitHub
+  and has **no bare-.pck player**. Sessions 1–7 shipped only `leverage.pck`
+  with "Open in XOGOT" instructions written for a player app that doesn't
+  exist → the reported gray screen was Xogot's empty editor viewport; the
+  game never launched on-device. TDL #31 corrects the #1/#13 premise
+  (append-only rule respected).
+
+### Xogot-engine-generation validation (sandbox, this session)
+- Full `--import` clean under **Godot 4.7.2** (the engine generation Xogot
+  embeds).
+- **288/288** tests under 4.7.2 (scratch copy) AND under 4.4.1 (authoritative
+  dir + from-pack).
+- Real boot-cards → main-menu flow rendered under **Forward Mobile +
+  Vulkan 1.4.305 (lavapipe)** on 4.7.2 — VLM-verified frames (LEVERAGE title
+  card with amber typography + tagline; main menu with key art +
+  NEW GAME/SETTINGS/CREDITS). World-load capture under llvmpipe software
+  rendering stalls in-sandbox (sub-fps software GPU is not representative of
+  an A-series GPU); world rendering was VLM-verified under Forward Mobile in
+  session 7 on 4.4.1, and the device checklist covers it.
+- `boot.gd` now prints `[LEVERAGE v…] boot start | Godot … | renderer … |
+  OS … | mem …` and a `boot cards done -> main menu` marker — these lines land
+  in Xogot's debugger Output pane and make any device launch failure
+  self-explaining (Xogot 1.7.12+ also surfaces launch-failure reasons itself).
+- `export_presets.cfg` gained `include_filter`/`[preset.0.options]` keys so
+  4.7-series editors no longer print preset-validation errors on project open.
+
+### Delivery corrected
+- New deliverable: **`LEVERAGE_XOGOT_project.zip`** — the full project folder
+  (~85 MB) that Xogot actually opens; the first open triggers on-device
+  import. GitHub `main` carries the same content for Xogot's GitHub open path.
+- PCK re-exported (v2.3.1, 44.0 MB) and from-pack validated 288/288; kept for
+  desktop `godot --main-pack` runs. Stale PCKs removed from `download/`.
+- `final_verification_guide.md` rewritten around the real Xogot flow (open the
+  project, never the .pck; wait for the on-device import; where launch errors
+  appear).
+
+## v2.3.2 — Parse-error ship-blockers fixed + cache-in-zip delivery (session 9, 2026-11-24)
+
+### Found and fixed (the real reason in-game features died on device)
+- **`scripts/ui/phone.gd:169`** shipped a C-style ternary (`mine ? " - sent" : ""` — invalid GDScript in every engine version): the in-game Phone panel was dead-on-arrival — `hud.toggle_phone()` did `load(...).new()` on a script that cannot parse.
+- **`scripts/ui/pause_menu.gd:41`** shipped `var s_idx := slot` with untyped inference (for-loop variable) — the Pause Menu was dead-on-arrival the moment the user paused.
+- Both parse-fail on Godot 4.4.1 **and** 4.7.2 (Xogot's engine); the 288-check suite never caught them because it never compiled those two UI scripts.
+- **New standing regression net**: `scripts.parse` suite (test_runner) now load-compiles **every** `.gd` under `res://scripts` in the real autoload context (46 checks; pack-mode falls back to explicit loads of the historically-broken files). Suite: 288 → **334 checks, 0 failed** on 4.7.2 AND 4.4.1 (fresh-imported project dir); from-pack: **292 checks, 0 failed** (4.4.1).
+
+### Delivery hardened
+- **XOGOT zip now ships the pre-imported `.godot/` cache** (built by Godot 4.7.2 — Xogot's engine generation): first open on device no longer depends on a multi-minute on-device import that iOS can kill; worst case (cache format mismatch) falls back to a normal re-import. `.godot/editor` + shader caches excluded.
+- `FIRST_READ.txt` at zip root: 5-step install (extract FIRST — do not open the zip in Xogot) + what you should see + one-line triage.
+- Desktop PCK re-exported from the fixed project (`LEVERAGE_2.3.2.pck`, 44 MB). **Scope corrected (D19): runs on Godot 4.4–4.6 desktop only** — 4.7+ segfaults on 4.4-built binary GDScript (upstream engine lock, documented).
+- Version 2.3.1 → 2.3.2 everywhere (project.godot, menu footer, boot diag).
+
+### Re-verified today from scratch (fresh sandbox, fresh extraction)
+- Fresh unzip of the shipped zip → Godot 4.7.2 first-open import: 21 s, 788 resources, 0 errors.
+- Boot → cards → main menu rendered under 4.7.2 Forward Mobile + Vulkan (lavapipe), frames VLM-verified (title card, notice card, menu with key art + NEW GAME/SETTINGS/CREDITS panel); menu stable ≥ 55 s (byte-identical captures, process alive).
+- Cross-version cache staleness documented: switching a project between 4.7- and 4.4-imported caches without a clean re-import yields transient anim-load failures — always re-import clean when changing engine generations (decision log #33 note).

@@ -53,6 +53,10 @@ var player_stats := {
         "side_jobs_done": 0,
         "vehicles_jacked": 0,
         "times_busted": 0,
+        "encounters_won": 0,
+        "encounters_seen": 0,
+        "gold_medals": 0,
+        "mission_medals": {},
 }
 var achievements: Dictionary = {}
 var collectibles_found: Dictionary = {}
@@ -273,6 +277,7 @@ func reset_for_new_game() -> void:
                 "missions_completed": 0, "fights_won": 0, "distance_walked": 0.0,
                 "distance_driven": 0.0, "money_earned": 0, "money_spent": 0,
                 "collectibles_found": 0, "side_jobs_done": 0, "vehicles_jacked": 0, "times_busted": 0,
+                "encounters_won": 0, "encounters_seen": 0, "gold_medals": 0, "mission_medals": {},
         }
         achievements = {}
         collectibles_found = {}

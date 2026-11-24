@@ -32,6 +32,9 @@ var _radio_label: Label
 var _combo_label: Label
 var _combo_t := 0.0
 var _wanted_flash := 0.0
+var _star_blink := 0.0             # stars blink while police search (no LOS)
+var _evaded_label: Label
+var _evaded_t := 0.0
 
 
 func _ready() -> void:
@@ -190,6 +193,7 @@ func _wire() -> void:
         EventBus.player_entered_vehicle.connect(_on_vehicle_entered)
         EventBus.player_exited_vehicle.connect(_on_vehicle_exited)
         EventBus.radio_station_changed.connect(_on_radio_station_changed)
+        EventBus.police_lost_target.connect(_show_evaded)
 
 
 func _on_health_changed(hp: float, max_hp: float) -> void:
@@ -268,6 +272,26 @@ func _process(delta: float) -> void:
         else:
                 _combo_label.text = ""
         _wanted_flash = max(0.0, _wanted_flash - delta)
+        # EVADED payoff flash fades out
+        if _evaded_t > 0.0:
+                _evaded_t -= delta
+                if _evaded_label and is_instance_valid(_evaded_label):
+                        _evaded_label.modulate.a = clamp(_evaded_t, 0.0, 1.0)
+                        _evaded_label.scale = Vector2.ONE * (1.0 + 0.25 * clamp(_evaded_t, 0.0, 1.0))
+                        if _evaded_t <= 0.0:
+                                _evaded_label.queue_free()
+                                _evaded_label = null
+        # stars blink while the pursuit is live but police have lost sight
+        if PoliceSystem != null and PoliceSystem.is_searching() and GameState.wanted_level > 0:
+                _star_blink += delta
+                var on: bool = fmod(_star_blink, 0.8) < 0.45
+                for i in 5:
+                        if i < GameState.wanted_level:
+                                (_stars[i] as Label).visible = on
+        else:
+                _star_blink = 0.0
+                for i in 5:
+                        (_stars[i] as Label).visible = true
         _cleanup_notifications(delta)
         # minimap redraw is automatic via draw signal
 
@@ -315,6 +339,20 @@ func _update_stars(level: int) -> void:
                         s.modulate.a = 0.16
 
 
+## Evasion payoff: the escape arc ends with a visible ALL CLEAR.
+func _show_evaded() -> void:
+        if _root == null or _evaded_label != null:
+                return
+        var l := LvgTheme.make_label("WANTED LEVEL CLEARED — EVADED", 54, LvgTheme.ACCENT, true)
+        l.set_anchors_preset(Control.PRESET_CENTER)
+        l.position = Vector2(640, 300)
+        l.scale = Vector2.ONE
+        _root.add_child(l)
+        _evaded_label = l
+        _evaded_t = 2.2
+        EventBus.sfx_requested.emit("sfx_wanted_clear", Vector3.ZERO)
+
+
 func _post_notification(text: String, kind: String) -> void:
         if _notif_box == null:
                 return
@@ -326,6 +364,7 @@ func _post_notification(text: String, kind: String) -> void:
                 "warn": color = LvgTheme.DANGER
                 "boss": color = LvgTheme.DANGER
                 "collect": color = LvgTheme.ACCENT
+                "reward": color = LvgTheme.ACCENT
                 "mission": color = LvgTheme.TEXT
         var l := LvgTheme.make_label(text, 26, color, true)
         _notif_box.add_child(l)

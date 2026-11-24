@@ -1,4 +1,4 @@
-checks=288
+checks=379
 failed=0
 boot.autoloads|PASS|EventBus autoload
 boot.autoloads|PASS|GameState autoload
@@ -7,12 +7,61 @@ boot.autoloads|PASS|InputRouter autoload
 boot.autoloads|PASS|AudioSystem autoload
 boot.autoloads|PASS|TimeWeather autoload
 boot.autoloads|PASS|WorldEvents autoload
+boot.autoloads|PASS|StreetEncounters autoload
 boot.autoloads|PASS|CityDirector autoload
 boot.autoloads|PASS|NPCDirector autoload
 boot.autoloads|PASS|PoliceSystem autoload
 boot.autoloads|PASS|MissionSystem autoload
 boot.autoloads|PASS|DialogueSystem autoload
 boot.autoloads|PASS|GameManager autoload
+scripts.parse|PASS|script compiles: combat/combatant.gd
+scripts.parse|PASS|script compiles: combat/weapons.gd
+scripts.parse|PASS|script compiles: combat/combat_player.gd
+scripts.parse|PASS|script compiles: combat/combat_feel.gd
+scripts.parse|PASS|script compiles: combat/disciplines.gd
+scripts.parse|PASS|script compiles: story/intro_cinematic.gd
+scripts.parse|PASS|script compiles: story/mission_system.gd
+scripts.parse|PASS|script compiles: story/dialogue_system.gd
+scripts.parse|PASS|script compiles: npc/pedestrian.gd
+scripts.parse|PASS|script compiles: npc/npc_director.gd
+scripts.parse|PASS|script compiles: npc/named_npc_agent.gd
+scripts.parse|PASS|script compiles: vehicles/motorcycle.gd
+scripts.parse|PASS|script compiles: vehicles/vehicle_player.gd
+scripts.parse|PASS|script compiles: ui/call_banner.gd
+scripts.parse|PASS|script compiles: ui/touch_controls.gd
+scripts.parse|PASS|script compiles: ui/dialogue_panel.gd
+scripts.parse|PASS|script compiles: ui/main_menu.gd
+scripts.parse|PASS|script compiles: ui/pause_menu.gd
+scripts.parse|PASS|script compiles: ui/ui_theme.gd
+scripts.parse|PASS|script compiles: ui/phone.gd
+scripts.parse|PASS|script compiles: ui/cinematic_overlay.gd
+scripts.parse|PASS|script compiles: ui/map_screen.gd
+scripts.parse|PASS|script compiles: ui/hud.gd
+scripts.parse|PASS|script compiles: ui/shop_screen.gd
+scripts.parse|PASS|script compiles: world/traffic_manager.gd
+scripts.parse|PASS|script compiles: world/time_weather.gd
+scripts.parse|PASS|script compiles: world/city_director.gd
+scripts.parse|PASS|script compiles: world/world.gd
+scripts.parse|PASS|script compiles: world/traffic_agent.gd
+scripts.parse|PASS|script compiles: world/world_events.gd
+scripts.parse|PASS|script compiles: world/city_builder.gd
+scripts.parse|PASS|script compiles: world/street_encounters.gd
+scripts.parse|PASS|script compiles: characters/character_factory.gd
+scripts.parse|PASS|script compiles: police/air_unit.gd
+scripts.parse|PASS|script compiles: police/police_system.gd
+scripts.parse|PASS|script compiles: police/police_unit.gd
+scripts.parse|PASS|script compiles: core/audio_system.gd
+scripts.parse|PASS|script compiles: core/game_state.gd
+scripts.parse|PASS|script compiles: core/input_router.gd
+scripts.parse|PASS|script compiles: core/phone_system.gd
+scripts.parse|PASS|script compiles: core/game_manager.gd
+scripts.parse|PASS|script compiles: core/save_system.gd
+scripts.parse|PASS|script compiles: core/event_bus.gd
+scripts.parse|PASS|script compiles: boot/boot.gd
+scripts.parse|PASS|script compiles: player/camera_rig.gd
+scripts.parse|PASS|script compiles: player/player_controller.gd
+scripts.parse|PASS|script count >= 40
+scripts.parse|PASS|all scripts compiled
 boot.flow|PASS|boot cards built
 boot.flow|PASS|boot state SPLASH
 boot.flow|PASS|boot timeline completed
@@ -262,6 +311,13 @@ audio.radio|PASS|radio plays inside vehicle
 audio.radio|PASS|radio retunes live
 audio.radio|PASS|radio stops on exit
 audio.radio|PASS|radio off restored
+audio.radio|PASS|engine loop stream loads
+audio.radio|PASS|engine loop is looping
+audio.radio|PASS|heli loop stream loads
+audio.radio|PASS|sfx asset present: sfx_ped_scream
+audio.radio|PASS|sfx asset present: sfx_wanted_clear
+audio.radio|PASS|sfx asset present: sfx_medal
+audio.radio|PASS|sfx asset present: sfx_heli_loop
 ui.touch|PASS|touch controls built
 ui.touch|PASS|fixed mapping X=punch action
 ui.touch|PASS|fixed mapping Y=heavy action
@@ -288,3 +344,38 @@ map.gps|PASS|route computed
 map.gps|PASS|route endpoints ordered
 map.gps|PASS|route follows road graph
 map.gps|PASS|second route multi-hop
+encounters.sim|PASS|encounter defs complete
+encounters.sim|PASS|four encounter archetypes
+encounters.sim|PASS|both combat kinds exist
+encounters.sim|PASS|explicit start works
+encounters.sim|PASS|encounter registered active
+encounters.sim|PASS|signal carried id+area
+encounters.sim|PASS|won pays money
+encounters.sim|PASS|encounters_won stat tracked
+encounters.sim|PASS|resolved no longer active
+encounters.sim|PASS|stash grab emits crime
+encounters.sim|PASS|crime carries witnesses
+encounters.sim|PASS|encounters expire by lifetime
+encounters.sim|PASS|cooldown blocks reroll
+encounters.sim|PASS|stats record seen
+police.evasion|PASS|searching false when calm
+police.evasion|PASS|searching true while unseen
+police.evasion|PASS|pursuit decays when unseen
+police.evasion|PASS|police_lost_target fired
+police.evasion|PASS|evasion stinger requested
+peds.panic|PASS|pedestrian spawns
+peds.panic|PASS|flee screams
+peds.panic|PASS|flee state entered
+peds.panic|PASS|cower state entered
+peds.panic|PASS|cower recovers to walk
+police.air|PASS|no air unit when calm
+police.air|PASS|air unit in 5-star plan
+police.air|PASS|air unit builds body+light
+police.air|PASS|air unit orbits player height band
+police.air|PASS|air unit reports sighting
+police.air|PASS|air unit leaves below 5 stars
+missions.medals|PASS|medal stats initialized
+missions.medals|PASS|campaign mission found
+missions.medals|PASS|gold medal awarded
+missions.medals|PASS|gold_medals stat counted
+missions.medals|PASS|best medal retained on worse replay

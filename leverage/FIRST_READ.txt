@@ -1,0 +1,49 @@
+LEVERAGE v2.4.0 — READ THIS FIRST (iPhone + Xogot install)
+
+You are holding the FULL Godot PROJECT (the only thing Xogot can run).
+A .pck file never worked in Xogot — Xogot is the Godot EDITOR for iPhone,
+and editors open PROJECT FOLDERS, not packs. That was the gray screen.
+
+WHAT'S NEW IN v2.4.0 ("Alive City")
+- Random street encounters while free-roaming: muggings to break up,
+  drug deals to bust, bar brawls, dropped cash stashes (grab one and the
+  witnesses feed the police heat system).
+- Wanted-level ESCAPE now has an arc: stars BLINK while police hunt you
+  blind; a "WANTED LEVEL CLEARED — EVADED" payoff when you shake them.
+- 5 stars = POLICE HELICOPTER with a searchlight overhead. Use cover.
+- Mission medals (BRONZE/SILVER/GOLD) for time + damage — replay for GOLD.
+- Pedestrians scream and some freeze in fear; vehicles have engine sound
+  again (it was accidentally silent before this version).
+
+WHAT TO DO (in this order)
+1. This folder arrived as LEVERAGE_v2.4.0_XOGOT_project.zip (~100 MB).
+   In the iPhone Files app, TAP THE ZIP ONCE — iOS extracts it into the
+   folder LEVERAGE_v2.4.0_XOGOT_project. (Do NOT open the zip itself in
+   Xogot — it must be the extracted FOLDER.)
+2. Open Xogot -> open that folder (or the project.godot inside it).
+   If Xogot warns "last edited in another Godot version" — tap continue.
+   The asset cache is pre-imported, so the first open should be quick.
+   If your Xogot build re-imports anyway: keep Xogot in the foreground
+   until the import finishes.
+3. Press PLAY.
+4. You should see: D'YOUNGS GAMES card -> LEVERAGE title -> content
+   notice -> MAIN MENU with city key art and NEW GAME / SETTINGS / CREDITS.
+   A few seconds of black before the first card = normal (shader compile).
+5. In game: walk around Old Quarter for a minute — a street encounter
+   should find you. Commit a crime, then ESCAPE the pursuit and watch the
+   EVADED payoff. Reach 5 stars for the helicopter.
+
+IF SOMETHING STILL FAILS
+Xogot 1.7.12+ prints the launch-failure reason on screen; the Output pane
+also prints these lines when boot works:
+   [LEVERAGE v2.4.0] boot start | Godot ... | renderer=mobile | OS=...
+   [LEVERAGE] boot cards done -> main menu
+Send whatever appears (or the Xogot error panel text) back with your
+iPhone model, iOS version and Xogot version. No card at all = delivery
+problem (tell us how you opened it); cards then crash = send the error.
+
+DESKTOP (optional): Godot 4.4-4.6 only: godot --main-pack LEVERAGE_2.4.0.pck
+(4.7+ desktop rejects 4.4-built packs — engine version lock, by design.)
+
+Full device checklist: docs/final_verification_guide.md inside this folder.
+— D'YOUNGS GAMES. Everyone has leverage on you.
