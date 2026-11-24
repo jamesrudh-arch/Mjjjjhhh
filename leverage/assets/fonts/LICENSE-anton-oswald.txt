@@ -1,0 +1,6 @@
+Anton and Oswald are licensed under the SIL Open Font License, Version 1.1.
+Copyright (c) The Anton Project Authors (https://github.com/googlefonts/AntonFont)
+Copyright (c) The Oswald Project Authors (https://github.com/googlefonts/OswaldFont)
+Reserved font names: Anton, Oswald.
+This license is copied below and also available with a FAQ at:
+https://scripts.sil.org/OFL

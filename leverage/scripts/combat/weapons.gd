@@ -167,6 +167,9 @@ func try_fire(camera: Camera3D) -> void:
                                 PoliceSystem.crime_severity("weapon_fire"), NPCDirector.witnesses_of(player.global_position))
                 elif node is VehicleBody3D:
                         EventBus.crime_committed.emit("property_damage", player.global_position, 6.0, [])
+                elif node.has_meta("explosive"):
+                        EventBus.explosive_damaged.emit(node, float(def.get("damage", 20.0)), player)
+                        EventBus.crime_committed.emit("property_damage", player.global_position, 6.0, [])
                 EventBus.sfx_requested.emit("sfx_bullet_impact", (hit["position"] as Vector3))
         if mag == 0:
                 EventBus.notification_posted.emit("Magazine empty - reload", "warn")

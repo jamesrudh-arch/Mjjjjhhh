@@ -95,10 +95,24 @@ func _physics_process(delta: float) -> void:
         var was_air := not is_on_floor()
         var prev_y := velocity.y
         move_and_slide()
-        # fall damage (light)
-        if was_air and is_on_floor() and prev_y < -12.0:
-                take_damage((-prev_y - 12.0) * 4.0, "fall")
-                _play("Jump_Land")
+        # fall damage (light) + landing presentation
+        if was_air and is_on_floor():
+                if prev_y < -12.0:
+                        take_damage((-prev_y - 12.0) * 4.0, "fall")
+                        _play("Jump_Land")
+                        _landing_fx(prev_y, 1.0)
+                elif prev_y < -5.0:
+                        _play("Jump_Land")
+                        _landing_fx(prev_y, 0.55)
+        # body language: lean into lateral motion + sprint forward-lean
+        if actor != null and is_instance_valid(actor):
+                var local_v: Vector3 = transform.basis.inverse() * velocity
+                var want_z: float = clampf(-local_v.x * 0.05, -0.22, 0.22)
+                var want_x: float = 0.0
+                if speed_mode == "sprint" and is_on_floor() and local_v.z > 4.0:
+                        want_x = 0.07
+                actor.rotation.z = lerpf(actor.rotation.z, want_z, clamp(8.0 * delta, 0.0, 1.0))
+                actor.rotation.x = lerpf(actor.rotation.x, want_x, clamp(6.0 * delta, 0.0, 1.0))
         # interact prompt
         _update_interact_prompt()
         # drive animation
@@ -118,7 +132,8 @@ func _physics_process(delta: float) -> void:
 
 
 ## Footsteps: cadence scales with gait speed; pitch variance avoids
-## machine-gun repetition. Only when grounded and moving.
+## machine-gun repetition. Only when grounded and moving. Sprint kicks up
+## visible dust so speed READS on screen.
 func _update_footsteps(delta: float, planar: float) -> void:
         if planar < 0.5 or not is_on_floor():
                 _step_t = 0.0
@@ -128,6 +143,19 @@ func _update_footsteps(delta: float, planar: float) -> void:
         if _step_t >= 1.0:
                 _step_t = 0.0
                 EventBus.sfx_requested.emit("sfx_footstep", global_position)
+                if speed_mode == "sprint" and planar > 5.5:
+                        var hv := Vector3(velocity.x, 0, velocity.z).normalized()
+                        CombatFeel.spawn_impact(global_position + Vector3(0, 0.06, 0) - hv * 0.3, 0.55, hv * -1.0)
+
+
+## Landing: dust burst + camera dip scaled by impact speed.
+func _landing_fx(impact_speed: float, strength: float) -> void:
+        CombatFeel.spawn_impact(global_position + Vector3(0, 0.08, 0), 1.1 * strength, Vector3.UP)
+        var rig := camera_rig as CameraRig
+        if rig != null:
+                rig.kick(0.05 * strength)
+                if strength >= 1.0:
+                        rig.shake(0.14, 0.28)
 
 
 ## Sprint widens FOV slightly for speed feel; eases back on stop.

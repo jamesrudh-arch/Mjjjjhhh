@@ -1,6 +1,6 @@
 # LEVERAGE — Asset Register & Licence Record
 
-Every shipped asset, its provenance, and licence. Project license stance: all third-party assets are CC0 (public domain dedication) — no attribution legally required, credited here regardless. Original assets are © D'Youngs Games, licensed for use within this project.
+Every shipped asset, its provenance, and licence. Project license stance: all third-party assets are CC0 (public domain dedication) — no attribution legally required, credited here regardless. Original assets are © DE YOUNG GAMES, licensed for use within this project.
 
 ## Characters & animation
 
@@ -21,7 +21,7 @@ Every shipped asset, its provenance, and licence. Project license stance: all th
 | Home Interior / Furniture | interiors (Marisol's bar, gym, apartment, clinic) | CC0 |
 | Ultimate Guns | pistol/rifle/shotgun visuals | CC0 |
 
-**Motorcycle** — `assets/vehicles/motorcycle.glb` is **original, authored in-project** via `scripts/make_motorcycle.py` (Blender 4.5.9 headless; cubes/cylinders, 4 materials). © D'Youngs Games — no third-party licence applies.
+**Motorcycle** — `assets/vehicles/motorcycle.glb` is **original, authored in-project** via `scripts/make_motorcycle.py` (Blender 4.5.9 headless; cubes/cylinders, 4 materials). © DE YOUNG GAMES — no third-party licence applies.
 
 ## Fonts
 
@@ -33,7 +33,7 @@ Every shipped asset, its provenance, and licence. Project license stance: all th
 
 ## Audio
 
-All `.wav` files under `assets/audio/` are **synthesized for this project** by `scripts/audio_gen.py` (numpy DSP: music beds, ambience loops, SFX set, radio jingles). © D'Youngs Games — original, no third-party samples.
+All `.wav` files under `assets/audio/` are **synthesized for this project** by `scripts/audio_gen.py` (numpy DSP: music beds, ambience loops, SFX set, radio jingles). © DE YOUNG GAMES — original, no third-party samples.
 
 ## Textures / materials
 
@@ -53,3 +53,18 @@ Flat-color StandardMaterial3D + small procedurally generated textures (noise-bas
 - assets/ui/portraits/*.png — 16 in-engine rendered contact head shots.
 - assets/ui/keyart/menu_bg_0.png — cinematic key art composed from an in-engine render.
 - UAL mannequin (itch.io, CC0) retained as the animation library + skeleton source only.
+
+## v2.5.0 additions
+- **Buildings (19 slots)**: recomposed from the Quaternius Downtown City
+  MegaKit (CC0) plain wall/cornice/column modules + project-authored window
+  units, doors, neon signs, roofs (compose_buildings_v3). Original (c) DE
+  YOUNG GAMES composition; kit modules CC0.
+- **megakit_tex/ (12 maps)**: downscaled from the MegaKit texture set (CC0),
+  1024 basecolor / 512 normal+ORM, shared by all buildings.
+- **road_dash.png**: project-authored dashed center-line texture (original).
+- **Fonts**: Anton + Oswald (SIL OFL 1.1, see LICENSE-anton-oswald.txt).
+- **SFX (10)**: sfx_train_horn, sfx_train_rumble, sfx_station_bell,
+  sfx_water_lap, sfx_splash, sfx_gull, sfx_pigeon_flutter, sfx_crickets,
+  sfx_logo_sting, sfx_explosion — original numpy DSP (audio_gen_v250.py).
+- **River/wildlife/gas/train/explosion systems**: all geometry code-built
+  (originals, (c) DE YOUNG GAMES); no third-party assets.

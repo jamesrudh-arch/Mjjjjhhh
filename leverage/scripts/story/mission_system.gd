@@ -9,6 +9,7 @@ signal marker_requested(position: Vector3)
 signal marker_cleared
 signal cinematic_requested(beat_id: String)
 signal vehicle_spawn_requested(spec: Dictionary)
+signal pickup_spawn_requested(item_id: String, pos: Vector3, count: int)
 
 const CAMPAIGN := {
         # ---------------- CHAPTER 1 ----------------
@@ -18,6 +19,8 @@ const CAMPAIGN := {
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(-240, 0, -120), "text": "Go to the Old Quarter market"},
                         {"type": "FIGHT", "wave": "vetch_collectors", "count": 3, "text": "Clear out the Vetch collectors"},
+                        {"type": "COLLECT", "item": "stall_cash", "count": 2, "pos": Vector3(-236, 0, -126), "text": "Recover the stall cash boxes they dropped"},
+                        {"type": "FIGHT", "wave": "vetch_street", "count": 3, "text": "The collectors came back angry - finish it"},
                         {"type": "TALK", "npc": "rizzo", "text": "Report back to Rizzo"},
                 ],
                 "reward": {"money": 400, "rep": {"family": 8.0}, "flags": {"debt_first_done": true}},
@@ -29,6 +32,7 @@ const CAMPAIGN := {
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(-300, 0, 60), "text": "Reach the Docklands impound"},
                         {"type": "DRIVE", "pos": Vector3(-120, 0, -80), "vehicle": "sedan", "text": "Drive the sedan to the Pawn & Barrel lot"},
+                        {"type": "GOTO", "pos": Vector3(-180, 0, 150), "text": "Swing by Dez Depot filling station on the way"},
                         {"type": "TALK", "npc": "nadia", "text": "Talk to Nadia at the pawn shop"},
                 ],
                 "reward": {"money": 350, "rep": {"family": 5.0, "community": 5.0}, "flags": {"make_change_done": true}},
@@ -55,6 +59,7 @@ const CAMPAIGN := {
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(-200, 0, 560), "text": "Go to Iron Gym in the Ironworks"},
                         {"type": "INTERACT", "target": "heavy_bag", "count": 3, "text": "Work the heavy bag (train kickboxing)"},
+                        {"type": "FIGHT", "wave": "sparring_partner", "count": 1, "text": "Show Theo the basics land - sparring round"},
                         {"type": "TALK", "npc": "big_theo", "text": "Talk to Big Theo"},
                 ],
                 "reward": {"money": 150, "flags": {"met_big_theo": true, "kickboxing_unlocked": true}, "xp": {"kickboxing": 40}},
@@ -65,6 +70,7 @@ const CAMPAIGN := {
                 "briefing": "Marisol's Bar, your local. Lucy Fang is coming to collect 'protection'. Marisol hates paying.",
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(-240, 0, -180), "text": "Get to Marisol's Bar"},
+                        {"type": "TALK", "npc": "marisol", "text": "Hear Marisol's plan before they arrive"},
                         {"type": "FIGHT", "wave": "vetch_shakers", "count": 4, "text": "Defend the bar from Lucy Fang's crew"},
                         {"type": "CHOICE", "id": "ch2_lucy", "prompt": "Lucy's crew is down. How do you leave it?",
                                 "options": [
@@ -92,6 +98,7 @@ const CAMPAIGN := {
                 "briefing": "The Family keeps its real books in Kestrel Tower's private vault. Ava wants copies. So do you.",
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(240, 0, -200), "text": "Enter Kestrel Tower"},
+                        {"type": "FIGHT", "wave": "tower_security", "count": 3, "text": "Clear the lobby security"},
                         {"type": "INTERACT", "target": "vault_terminal", "count": 1, "text": "Reach the vault terminal"},
                         {"type": "CHOICE", "id": "ch3_ledger", "prompt": "You hold the Family ledger. Ava's offer was generous - but the ledger is leverage itself.",
                                 "options": [
@@ -169,6 +176,7 @@ const CAMPAIGN := {
                 "objectives": [
                         {"type": "GOTO", "pos": Vector3(120, 0, -620), "text": "Drive to the Castellane Villa"},
                         {"type": "FIGHT", "wave": "villa_guards", "count": 5, "text": "Fight through the villa grounds"},
+                        {"type": "FIGHT", "wave": "villa_elite", "count": 3, "text": "Break Vito's last line - the ledger guard"},
                         {"type": "CHOICE", "id": "finale", "prompt": "Vito, on his knees, offers you the whole operation. The ledger is in your hand.",
                                 "options": [
                                         {"label": "Kill Vito. End the Family in blood.", "tags": {"ending_blood": true}},
@@ -310,6 +318,10 @@ func _spawn_objective_entities() -> void:
                 "COLLECT":
                         if String(obj.get("item", "")) == "token":
                                 marker_requested.emit(Vector3(-240, 0, -120))
+                        elif obj.has("pos"):
+                                pickup_spawn_requested.emit(String(obj.get("item", "")),
+                                        obj.get("pos", Vector3.ZERO), int(obj.get("count", 1)))
+                                marker_requested.emit(obj.get("pos", Vector3.ZERO))
                 _:
                         pass
 

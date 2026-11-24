@@ -1,5 +1,93 @@
 # LEVERAGE — Changelog
 
+## v2.5.0 — "The Living City" (session 13, 2026-11-24/25)
+The world-first upgrade pass: everything the city was missing to feel alive,
+plus the DE YOUNG GAMES identity and a story-first opening. Every system
+below is new, tested, and VLM-verified in rendered evidence.
+
+- **The Cinder River**: the river splits Cinder City in two (west/east banks).
+  Terrain channel carved into the ground mesh (48k-vert displaced plane),
+  animated water shader (unshaded, scrolling waves + sun glints + bank foam),
+  stone parapets with gaps at crossings, two road bridges with railings/piers/
+  lamps, a marina with 3 bobbing boats, riverside trees + benches, 3 fish
+  shoals (18 fish) that wander and jump with splash SFX + particles, water-lap
+  ambience loops. Buildings/props/lamps excluded from the water via
+  CityBuilder._blocked. 9-check suite `world.river`.
+- **Wildlife**: pigeons (4 flocks, peck/wander/flee-and-land, wing flap),
+  river gulls (8, circling + dives), night rats (12, alley scurry + flee),
+  fireflies (4 patches, additive particles at night), moths orbiting
+  streetlights (8 lamps); everything scatters at gunfire/combat. 6-check
+  suite `world.wildlife`.
+- **Filling stations**: 2 gas stations (Docklands "Dez Depot" + East Strip) —
+  concrete apron, canopy on steel columns with illuminated fascia, 2 pump
+  islands each, price totem, glass kiosk. Pumps are EXPLOSIVE: bullet damage
+  (weapon raycast → explosive meta) triggers chained cinematic explosions
+  (pooled fire particles, flash light, shockwave ring, hit-stop, camera
+  shake, radius damage). Suites `world.gas`, `combat.explosions`.
+- **The Cinder Line train**: elevated rail viaduct across the north of the
+  city (z=-340) with columns, road overpasses, a river arch, 2 passenger
+  platforms with canopies/stairs/lit signs; scheduled 5-car train (loco +
+  4 cars, lit windows, headlight, horn + station bell + rumble loop) runs
+  east/west every 95 s with 7 s dwells. 8-check suite `world.train`.
+- **DE YOUNG GAMES animated ident** (boot card 1): custom DY monogram badge
+  (progressive keyline draw-on + stroke reveal), "DE YOUNG GAMES" wordmark
+  with letter-by-letter amber illumination sweep, rule + PRESENTS, glow
+  pulse synced to the new `sfx_logo_sting` ident audio. Branding standardized
+  to "DE YOUNG GAMES" everywhere (boot, menu, credits, docs). Suite
+  `brand.logo` + VLM-verified render (01_deyoung_ident.png).
+- **Conversational intro**: the opening is now a real scene — camera flights
+  over the live city (river -> main avenue -> market), 14 beats of typewriter
+  dialogue, Rizzo and Dez converse with portraits (Tommy's letter, the Ledger,
+  the UNKNOWN CALLER phone threat), tap X to advance / hold X to skip,
+  chapter card, then the tutorialized entry. Music: story cue during the
+  flight, explore on finish.
+- **Buildings rebuilt from the Quaternius Downtown City MegaKit (CC0)**: all
+  19 building slots recomposed (compose_buildings_v3) — kit plain wall
+  modules with real brick/metal/trim textures, custom 40-tri window units
+  (white frames + dark glass + 35% warm-lit HDR panes that bloom at night),
+  storefront glass fronts + doors with canopies, NEON SIGNS on every
+  storefront (pink/cyan/orange/green HDR emissive bands + blade signs),
+  cornices, corner columns, tiled roofs with AC units and access huts.
+  1.4-7.8k tris each (was ~1-2k flat boxes with stickers), one shared
+  4.2 MB texture set — building payload 29 MB -> 5 MB. v2.4 latent defect
+  fixed: city geometry was parented to the world node so the night-emission
+  ramp never actually ran (`city.build(city)` now); night windows + neon now
+  ramp correctly.
+- **Roads get lane markings** (v2.4 gap: road_line_albedo existed but was
+  never wired): dashed warm center lines on every road segment (proven thin-
+  box pattern), visible in evidence.
+- **Difficulty director**: chapter-scaled enemy HP/damage/count (1.0x ->
+  1.9x by chapter 5, tier names on the chapter cards). Applied to all mission
+  and street-encounter spawns. 6-check suite `combat.difficulty`.
+- **Deeper campaign**: missions enriched into longer arcs — Debt First is now
+  a 5-stage arc (fight -> recover stall cash -> second wave -> report), Make
+  Change swings past Dez Depot, Heavy Bags adds a sparring round, Bar Night
+  opens with Marisol's plan, The Ledger adds lobby security, the finale adds
+  Vito's elite guard. Mission COLLECT objectives now spawn glowing world
+  pickups (new pickup_spawn_requested signal). Chapter title cards on every
+  campaign mission start (CinematicOverlay).
+- **Cinematic fonts**: Anton (display) + Oswald (condensed kickers/labels),
+  OFL-licensed, wired through LvgTheme with fallbacks.
+- **10 new SFX** (audio_gen_v250, original numpy DSP): train horn, train
+  rumble loop, station bell, water lap loop, splash, gull cry, pigeon
+  flutter, night crickets, DE YOUNG ident sting, cinematic explosion.
+  Ambient one-shot tables extended (gulls on the docks by day, crickets at
+  night in green districts).
+- **Night look**: blue ambient floor (not black), blue night fog, brighter
+  streetlamp pools, HDR window/neon emissives (bloom on the Forward Mobile
+  device renderer).
+- **Story bible** (docs/story_bible.md): the DE YOUNG GAMES universe framing,
+  Cinder City districts + systems, the Ledger, character dossiers, campaign
+  structure, tone rules, sequel hooks.
+- **Minimap readability**: district tint limited to the current area.
+- **Verification**: 452/452 checks on Godot 4.4.1 (73 new v2.5 checks);
+  from-pack suite on the re-exported PCK; real-boot render battery under
+  Xvfb (OpenGL3 approximation) with VLM verification of every new system
+  (docs/evidence/session13/): DE YOUNG ident, title, menu, river+bridge+water,
+  street with markings + pedestrians + brick buildings + dusk mood (PASS),
+  train viaduct with lit train (PASS), gas station, neon storefront night
+  close-up, old quarter night.
+
 ## 2026-11-24 (session 11 — v2.4.0 re-verified + delivery hardened; no game-code changes)
 - Full audit-test-verify re-run from scratch on the v2.4.0 tree (sandbox had recycled; Godot 4.4.1 + 4.7.2 + lavapipe restored): 379/379 on both engines (fresh imports), 335/335 from the re-exported 44.16 MB PCK, real-boot render battery + VLM on 4.7.2 (menu + gameplay frames clean), world_shot gameplay evidence.
 - **Corrected the session-10 delivery report's false claim**: v2.4.0 was never actually committed ("cdb7380" does not exist — reflog ends at v2.3.1). v2.4.0 + artifacts committed for real this session.

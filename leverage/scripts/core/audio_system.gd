@@ -195,17 +195,17 @@ func set_ambience_for_area(area_id: String) -> void:
 # active so fights stay readable.
 const AMBIENT_ONESHOTS := {
         "old_quarter": {"day": {"sfx_birds": 3.0, "sfx_chatter": 3.0, "sfx_car_passby": 2.0, "sfx_wind_gust": 1.0},
-                        "night": {"sfx_distant_siren": 2.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0}},
-        "docklands": {"day": {"sfx_car_passby": 3.0, "sfx_distant_siren": 1.0, "sfx_chatter": 1.0, "sfx_wind_gust": 2.0},
-                      "night": {"sfx_distant_siren": 3.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0}},
+                        "night": {"sfx_distant_siren": 2.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0, "sfx_crickets": 2.0}},
+        "docklands": {"day": {"sfx_car_passby": 3.0, "sfx_distant_siren": 1.0, "sfx_chatter": 1.0, "sfx_wind_gust": 2.0, "sfx_gull": 2.0},
+                      "night": {"sfx_distant_siren": 3.0, "sfx_wind_gust": 2.0, "sfx_car_passby": 1.0, "sfx_gull": 0.5, "sfx_crickets": 1.0}},
         "kestrel_district": {"day": {"sfx_chatter": 3.0, "sfx_car_passby": 3.0, "sfx_city_horn": 1.0},
-                             "night": {"sfx_city_horn": 2.0, "sfx_car_passby": 2.0, "sfx_chatter": 1.0}},
+                             "night": {"sfx_city_horn": 2.0, "sfx_car_passby": 2.0, "sfx_chatter": 1.0, "sfx_crickets": 1.0}},
         "neon_strip": {"day": {"sfx_chatter": 3.0, "sfx_city_horn": 2.0, "sfx_car_passby": 2.0},
                        "night": {"sfx_chatter": 3.0, "sfx_city_horn": 2.0, "sfx_car_passby": 2.0, "sfx_distant_siren": 1.0}},
         "ironworks": {"day": {"sfx_car_passby": 2.0, "sfx_wind_gust": 2.0, "sfx_city_horn": 1.0},
-                      "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0}},
+                      "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0, "sfx_crickets": 1.0}},
         "heights": {"day": {"sfx_birds": 3.0, "sfx_wind_gust": 2.0, "sfx_chatter": 1.0},
-                    "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0, "sfx_birds": 0.5}},
+                    "night": {"sfx_wind_gust": 3.0, "sfx_distant_siren": 1.0, "sfx_birds": 0.5, "sfx_crickets": 3.0}},
         "interior": {"day": {"sfx_chatter": 2.0},
                      "night": {"sfx_chatter": 1.0}},
 }

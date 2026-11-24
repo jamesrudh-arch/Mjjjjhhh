@@ -49,7 +49,7 @@ open on device is fast and cannot be killed mid-import.
    pre-imported cache should make the first open quick; if Xogot's engine
    build differs it will re-import — keep it in the foreground until done.
 4. Press **Play**. A few seconds of dark (shader compile) before the
-   D'YOUNGS GAMES card is normal. Card → LEVERAGE title → content notice →
+   DE YOUNG GAMES card is normal. Card → LEVERAGE title → content notice →
    main menu with key art = the gray screen is gone.
 5. In game, CHECK the two fixed features early: **pause the game** (menu
    shows Save slots) and **open the Phone** (threads render, replies work).
@@ -62,7 +62,7 @@ the failure report.
 ## Device verification checklist (mark each PASS/FAIL)
 
 Boot flow:
-- [ ] D'YOUNGS GAMES card full duration; LEVERAGE title + tagline; content
+- [ ] DE YOUNG GAMES card full duration; LEVERAGE title + tagline; content
       notice; main menu with key art.
 - [ ] New Game → opening cinematic plays with subtitles; skip with X works.
 

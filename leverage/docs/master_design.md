@@ -4,7 +4,7 @@
 **Tagline:** "Everyone has leverage on you."
 **Genre:** third-person open-world crime-action drama
 **Platform:** Godot 4.7 project authored on the 4.4-compatible API subset; Mobile renderer; runs via XOGOT on iPhone (landscape, touch + gamepad).
-**Studio card:** D'YOUNGS GAMES presents.
+**Studio card:** DE YOUNG GAMES presents.
 
 ## 1. Fantasy and pillars
 
@@ -53,7 +53,7 @@ Six connected areas (full detail in `world_design.md`): Old Quarter, Docklands, 
 
 ## 6. Opening flow (mandatory order)
 
-1. D'YOUNGS GAMES presents card (2.4 s)
+1. DE YOUNG GAMES presents card (2.4 s)
 2. LEVERAGE title + tagline (3.0 s)
 3. Content notice (2.2 s)
 4. Main menu (Continue / New Game / Settings / Credits)

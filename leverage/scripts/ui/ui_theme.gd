@@ -25,11 +25,13 @@ const TRANSPARENT := Color(0, 0, 0, 0)
 static var font_body: FontFile
 static var font_body_bold: FontFile
 static var font_display: FontFile
+static var font_condensed: FontFile
 static var font_mono: FontFile
 
 const FONT_BODY_PATH := "res://assets/fonts/LiberationSans-Regular.ttf"
 const FONT_BODY_BOLD_PATH := "res://assets/fonts/LiberationSans-Bold.ttf"
-const FONT_DISPLAY_PATH := "res://assets/fonts/lilita_one_regular.ttf"
+const FONT_DISPLAY_PATH := "res://assets/fonts/Anton-Regular.ttf"
+const FONT_CONDENSED_PATH := "res://assets/fonts/Oswald.ttf"
 const FONT_MONO_PATH := "res://assets/fonts/DejaVuSans.ttf"
 
 
@@ -38,7 +40,13 @@ static func load_fonts() -> void:
                 return
         font_body = load(FONT_BODY_PATH) as FontFile
         font_body_bold = load(FONT_BODY_BOLD_PATH) as FontFile
+        # cinematic display: Anton (heavy condensed) with Lilita One fallback
         font_display = load(FONT_DISPLAY_PATH) as FontFile
+        if font_display == null:
+                font_display = load("res://assets/fonts/lilita_one_regular.ttf") as FontFile
+        font_condensed = load(FONT_CONDENSED_PATH) as FontFile
+        if font_condensed == null:
+                font_condensed = font_body_bold
         font_mono = load(FONT_MONO_PATH) as FontFile
 
 
@@ -145,7 +153,12 @@ static func make_panel(bg := PANEL, border := LINE) -> PanelContainer:
 
 ## Letter-spaced small caps label (section headers).
 static func make_kicker(text: String, color := TEXT_DIM, size := 26) -> Label:
-        var l := make_label(text, size, color, true)
+        load_fonts()
+        var l := Label.new()
+        l.text = text
+        l.add_theme_font_override("font", font_condensed)
+        l.add_theme_font_size_override("font_size", size)
+        l.add_theme_color_override("font_color", color)
         l.uppercase = true
         return l
 

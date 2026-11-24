@@ -1,124 +1,108 @@
-# LEVERAGE — Delivery Report (v2.4.0 "Alive City")
+# LEVERAGE — Delivery Report (v2.5.0 "The Living City")
 
 **Project:** LEVERAGE — "Everyone has leverage on you." Third-person open-world crime-action drama in Cinder City.
 **Target:** Xogot on iPhone/iPad (the Godot EDITOR app by Xibbon, embedding Godot 4.7) — Mobile renderer.
-**Date:** 2026-11-24. Built session 10; **session 11 re-verified everything from scratch and hardened the delivery; session 12 re-verified the suite again live and pushed to GitHub. State: DELIVERED + COMMITTED + PUSHED.**
+**Date:** 2026-11-25. Built session 13; session 14 re-verified the entire tree from scratch, rebuilt the device zip, and committed + pushed everything. **State: DELIVERED + COMMITTED + PUSHED (repo main @ v2.5.0).**
 
 ---
 
-## 1. What happened in sessions 11–12
+## 1. What v2.5.0 is — the full-stack 10/10 pass
 
-The user said "Go" on the full pipeline. The sandbox had recycled again
-(Godot binaries + lavapipe wiped), so the toolchain was rebuilt first
-(official GitHub releases, Godot 4.4.1 + 4.7.2, into gitignored `tools/`),
-then the entire audit-test-verify battery was re-run on the v2.4.0 tree
-with zero assumptions, and the delivery was hardened:
+The mandate was widened from game-feel to the ENTIRE game: graphics, fonts,
+animation, buildings, vehicles, filling stations, trains, camera, landscape,
+rivers + full wildlife (fish, animals, birds, insects, rodents), music, SFX,
+the DE YOUNG GAMES logo, a conversational intro that establishes the story,
+fewer-but-deeper levels with rising difficulty and a real ending — "a world
+on its own, a new entry in the DE YOUNG GAMES universe."
 
-1. **Re-verification (all fresh this session)**:
-   - 4.4.1 clean-room: fresh import → **379/379, 0 failed, 0 SCRIPT
-     ERROR** → PCK re-export (44,159,440 B) → **335/335 from-pack**.
-   - 4.7.2 (Xogot's engine), main tree: fresh import → **379/379, 0 failed**.
-   - Real-boot render battery on 4.7.2 Forward Mobile + lavapipe: boot
-     cards → menu, all frames non-black (95%); VLM on the menu frame:
-     "no obvious rendering problems — text crisp and legible, scene
-     renders fully" (title, NEW GAME/SETTINGS/CREDITS, key art).
-   - `world_shot` gameplay: 76% non-black frames, VLM reads the full HUD
-     (minimap + objective marker, $250, joystick, A/B/X/Y, PHONE VOICE
-     dialogue) and the third-person player in a yellow jacket.
-   - Numbers identical to session 10 — the tree had not drifted.
-2. **A real hole was found and closed — the git state**: the session-10
-   report claimed v2.4.0 was "committed locally (cdb7380)". Reflog audit
-   this session proved **no such commit ever existed** (the session ran out
-   of context before committing); 395 files of v2.4.0 work sat uncommitted
-   on top of v2.3.1 (07a4cc0). v2.4.0 + all session artifacts are now
-   **committed to main for real this session** (see §6 for the push).
-3. **New: `LEVERAGE_hello_diag_project.zip`** — a zero-dependency 5.8 KB
-   diagnostic project (no assets, no autoloads; ColorRect + default font
-   only). Verified on 4.7.2: import OK, real render 95% non-black, VLM
-   reads "LEVERAGE HELLO DIAG" + the moving band + fps line verbatim, and
-   the SHIPPED zip extracted to a clean directory boots instantly with the
-   pre-imported cache accepted. It isolates the delivery chain from the
-   game on your device — its FIRST_READ.txt triages the result.
+Shipped (details + evidence pointers in `leverage/docs/changelog.md` v2.5.0):
 
-## 2. What ships (in `download/`)
+1. **The Cinder River** — carved terrain channel through the 48k-vert ground
+   mesh, animated water shader (scrolling waves + sun glints + bank foam),
+   stone parapets, 2 bridges with lamps, a marina with 3 bobbing boats,
+   3 fish shoals that jump with splash SFX + particles, water-lap ambience.
+2. **Wildlife** — pigeon flocks (peck/wander/flee-and-land), circling river
+   gulls, night rats in the alleys, fireflies after dark, moths orbiting
+   streetlights; gunfire scatters all of it.
+3. **Two filling stations** (Dez Depot, East Strip) — canopy/pumps/kiosk/
+   price totem, and the pumps are EXPLOSIVE: chained cinematic explosions
+   with fire particles, shockwave ring, hit-stop, camera shake, radius damage.
+4. **The Cinder Line train** — northern elevated viaduct, 2 platforms, a
+   scheduled 5-car train (lit windows, headlight, horn, station bell,
+   rumble) crossing east/west every 95 s.
+5. **All 19 buildings rebuilt** from the Quaternius Downtown City MegaKit
+   (CC0): real brick/metal/trim textures, custom window units with 35%
+   warm-lit HDR night panes, storefront glass + canopies, NEON signs on
+   every storefront, cornices, tiled roofs with AC units. Building payload
+   29 MB → 5 MB. Closed the v2.4 latent defect where the night-emission
+   ramp never ran (city geometry was parented to the wrong node).
+6. **DE YOUNG GAMES animated ident** — DY monogram keyline draw-on, amber
+   letter-by-letter wordmark illumination, glow pulse synced to a new
+   audio sting. Branding standardized to "DE YOUNG GAMES" everywhere.
+7. **Conversational intro** — camera flights over the live city while
+   Rizzo and Dez actually talk (14 typewriter beats, portraits, Tommy's
+   letter, the Ledger, an UNKNOWN CALLER threat), tap X to advance /
+   hold X to skip, chapter card, then tutorialized entry.
+8. **Difficulty director + deeper campaign** — chapter-scaled enemy
+   HP/damage/count (1.0x → 1.9x by chapter 5, tier names on chapter
+   cards); missions lengthened into multi-stage arcs; glowing world
+   pickups for COLLECT objectives; chapter title cards on every mission.
+9. **Cinematic fonts** (Anton + Oswald, OFL), **10 new original SFX**
+   (train horn/rumble, station bell, water lap, splash, gull, pigeon
+   flutter, crickets, ident sting, cinematic explosion), **blue-noir
+   night look**, lane markings on every road, story bible
+   (`docs/story_bible.md`) framing the DE YOUNG GAMES universe.
 
-| Item | Purpose |
-|---|---|
-| **`LEVERAGE_v2.4.0_XOGOT_project.zip`** (106,802,448 B) | **The one you want.** Full project + pre-imported 4.7-native asset cache — Xogot's first open is fast and can't be killed mid-import. |
-| **`LEVERAGE_hello_diag_project.zip`** (5,818 B) | 30-second delivery-chain test; try it first if anything misbehaves. |
-| `LEVERAGE_2.4.0.pck` (44,159,440 B) | Desktop only, Godot 4.4–4.6: `godot --main-pack LEVERAGE_2.4.0.pck` |
-| `LEVERAGE_v2.4.0_Audit_and_WorldClass_Report.pdf` | Full audit results + research + recommendations to 10/10 |
-| `CHECKSUMS.txt` | SHA-256 + byte size of every file in download/ |
-| `LEVERAGE_delivery_report.md` | This file |
+## 2. Session-14 zero-assumption re-verification
 
-Key checksums (full list in CHECKSUMS.txt; verify after transfer):
-- XOGOT zip `sha256 = 10957c3bba816e48f3bb8f38bc13656bba3c566485e25283287b6fbc862af7cc` (106,802,448 B)
-- PCK `sha256 = 449e5d512956cb320f494b8a436cf2a41b829af7a2bd14f70d637881ecf37b7a` (44,159,440 B)
-- hello diag zip `sha256 = 5ae7680cf14a8119c235954b27600fdc0215e93247c4204f55f7d7e39900bcd3` (5,818 B)
+- **4.7.2 (Xogot's engine), fresh import:** 452/452 checks, 0 failed.
+- **4.4.1, fresh import:** 452/452 checks, 0 failed, 0 SCRIPT ERRORs.
+- **From-pack:** the shipped `LEVERAGE_2.5.0.pck` (31,801,872 B) runs the
+  full suite via `--main-pack`: 401/401, 0 failed (51 project-dir-only
+  enumeration checks don't apply in pack mode — same as every version).
+- **Device zip integrity:** `LEVERAGE_v2.5.0_XOGOT_project.zip`
+  (122,732,533 B, 2,352 files) extracted to a clean dir and imported by
+  4.7.2: exit 0, 0 errors — the pre-imported cache is accepted.
+- **Render evidence:** 14-shot battery from the real boot flow (ident,
+  title, menu, river/bridge, dusk streets with lane markings + peds,
+  train station with lit train, gas station, neon night close-ups,
+  building beauty shot) in `docs/evidence/session13/`, VLM-verified
+  (changelog v2.5.0); spot-checked on disk this session.
+- Suite history: 215 → 238 → 257 → 288 → 334 → 379 → **452 checks**;
+  PCK 44.16 MB → **31.8 MB** (buildings payload 29 → 5 MB).
 
-GitHub `main` (`jamesrudh-arch/Mjjjjhhh`): v2.4.0 + all session artifacts
-**committed and pushed to GitHub** (session 12). The push went out only
-after a fresh in-turn re-verification: 379/379 on Godot 4.7.2 and 335/335
-from the shipped PCK on 4.4.1 — identical to session 11. Note: the 102 MB
-XOGOT zip itself is a sandbox-download deliverable only (GitHub caps files
-at 100 MB); the repo carries the full project source under `leverage/`
-plus the 44 MB desktop PCK, so a git clone opens in Xogot too (first open
-just re-imports instead of using the pre-baked cache).
+## 3. Deliverables (all in `download/`, checksums in `CHECKSUMS.txt`)
 
-## 3. Verification evidence (session 11, all fresh)
+| File | Size | For |
+|---|---|---|
+| `LEVERAGE_v2.5.0_XOGOT_project.zip` | 122,732,533 B | **iPhone/iPad + Xogot — use this one** |
+| `LEVERAGE_2.5.0.pck` | 31,801,872 B | Desktop Godot 4.4–4.6 (`--main-pack`) |
+| `LEVERAGE_hello_diag_project.zip` | 5,818 B | Delivery-chain diagnostic (try first if anything misbehaves) |
+| `LEVERAGE_v2.4.0_Audit_and_WorldClass_Report.pdf` | — | Session-11 audit record (history) |
+| `README.md`, `CHECKSUMS.txt`, this report | — | Docs |
 
-- 379/379 + 335/335 as in §1; zero SCRIPT ERRORs anywhere.
-- Render evidence this session: `scratch/render_s11/` (boot cards, menu ×2,
-  world_10s, world_18s); session-10 evidence remains in
-  `docs/evidence/session10/` (in-repo, in-zip).
-- Known tooling note (D22): standalone `--check-only` audits report false
-  compile errors for autoload-referencing scripts on both engines
-  (identical in session 10) — the suite is the authoritative compile gate.
-- Session 12 (push turn, all live): suite re-run on 4.7.2 → 379/379, 0
-  failed; from-pack on 4.4.1 → 335/335, 0 failed; deliverable SHA-256s
-  re-verified against CHECKSUMS.txt; then `git push origin main`.
+GitHub `jamesrudh-arch/Mjjjjhhh` main carries the full project + docs +
+PCK + this report (zips over 100 MB stay sandbox-delivery only — GitHub
+hard cap). Stale v2.3.x/v2.4.0 artifacts were purged; `download/` holds
+the current set only.
 
-## 4. Install — iPhone + Xogot (5 steps, in order)
+## 4. How to install (short version)
 
-1. Get `LEVERAGE_v2.4.0_XOGOT_project.zip` onto the iPhone (AirDrop / iCloud / Files).
-2. **In Files, tap the zip ONCE to extract** → creates the project FOLDER.
-   **Never open the zip itself in Xogot.**
-3. Open Xogot → open that folder (or its `project.godot`). Version warning →
-   continue. The pre-imported cache should make this quick; if your build
-   re-imports, keep Xogot in the foreground until it finishes.
-4. Press **Play** → D'YOUNGS GAMES card → LEVERAGE title → notice → **main
-   menu with key art**. A few seconds of black first (shader compile) is normal.
-5. In game, try the new stuff early: walk Old Quarter for a minute (a street
-   encounter should find you), commit a crime and **escape the pursuit**
-   (stars blink while they search; EVADED payoff when clear), and push to
-   **5 stars for the helicopter**.
+1. Files app → tap `LEVERAGE_v2.5.0_XOGOT_project.zip` ONCE (iOS extracts).
+2. Xogot → open the extracted FOLDER (never the zip) → Play.
+3. Expected: DE YOUNG GAMES ident → LEVERAGE title → notice → main menu
+   (v2.5.0 footer). See `FIRST_READ.txt` (inside the zip) for the full
+   checklist and the in-game tour (river, train, gas pumps, night).
 
-If launch still fails: run `LEVERAGE_hello_diag_project.zip` first (same
-install steps — 30 seconds). Hello works + game fails = in-game problem on
-your device: send the Xogot Output lines (they start with
-"[LEVERAGE v2.4.0] boot start | Godot … | renderer … | OS …"). Hello also
-fails = delivery/open issue (say exactly how you opened it). Xogot 1.7.12+
-shows the launch-failure reason on its panel either way. Send iPhone model,
-iOS version, Xogot version with any report.
+## 5. Honest limits
 
-## 5. What v2.4.0 added (full detail in the PDF report + repo changelog)
+- On-device performance/thermals and Xogot's import behavior remain
+  Device-only (sandbox has no iPhone). The zip carries a 4.7.2-native
+  cache to make the first open fast.
+- Sandbox renders use software rasterizers (llvmpipe/OpenGL3) — device
+  GPU output will look better, not worse.
+- The suite proves code paths and invariants; "fun" is judged on the
+  device. Session-14's recommendation list (in the chat reply) is the
+  pre-testing punch list for the next pass.
 
-Street encounters director (mugging / drug deal / brawl / dropped stash with
-witnesses → police heat), wanted-evasion loop (searching stars + EVADED flash
-+ stinger), 5-star police helicopter (orbit + tracking searchlight + looping
-rotor, keeps reporting sightings), mission medals (bronze/silver/gold, best
-retained across replays), pedestrian panic (screams + cower), vehicle engine
-sound restored (D20), PCK hygiene fixed (D21), four new original SFX.
-
-## 6. Required user actions
-
-1. **Play test v2.4.0 on device** (steps above) — the sandbox has proven
-   everything it can; the remaining Device-only items (fps feel, audio
-   audition, encounter tuning) need your iPhone.
-2. The repo is **pushed to GitHub** (the PAT you re-sent worked). Since
-   that token has been pasted into chat, rotate it when convenient:
-   github.com → Settings → Developer settings → Personal access tokens →
-   revoke it and create a fresh one for any future session.
-3. Report anything that fails with the exact Xogot Output lines.
-
-— D'YOUNGS GAMES. Everyone has leverage on you.
+— DE YOUNG GAMES. Everyone has leverage on you.

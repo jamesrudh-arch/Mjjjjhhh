@@ -30,6 +30,10 @@ var _markers: Array = []
 var _lamp_lights: Array = []
 var _night_materials: Array = []      # building materials w/ emission ramp
 var _intro: Node = null
+var _river: CinderRiver
+var _wildlife: Wildlife
+var _gas: GasStations
+var _train: TrainLine
 var _lightning_t := 0.0
 var _lightning_flash := 0.0
 var _current_interior := ""
@@ -46,6 +50,7 @@ func _ready() -> void:
         traffic.name = "Traffic"
         add_child(traffic)
         _spawn_motorcycles()
+        _build_landmarks()
         _setup_phone()
         hud = load("res://scripts/ui/hud.gd").new()
         hud.name = "HUD"
@@ -70,10 +75,10 @@ func _build_environment() -> void:
         var environment := Environment.new()
         var sky := Sky.new()
         var sky_mat := ProceduralSkyMaterial.new()
-        sky_mat.sky_top_color = Color("3f5a8c")
-        sky_mat.sky_horizon_color = Color("9db3c8")
-        sky_mat.ground_bottom_color = Color("2c2a26")
-        sky_mat.ground_horizon_color = Color("8a8873")
+        sky_mat.sky_top_color = Color("36517e")
+        sky_mat.sky_horizon_color = Color("c9a37c")
+        sky_mat.ground_bottom_color = Color("26241f")
+        sky_mat.ground_horizon_color = Color("7c6f56")
         sky_mat.sun_angle_max = 30.0
         sky_mat.sun_curve = 0.12
         sky.sky_material = sky_mat
@@ -82,16 +87,24 @@ func _build_environment() -> void:
         environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
         environment.ambient_light_energy = 0.75
         environment.fog_enabled = true
-        environment.fog_light_color = Color("8fa0b0")
+        environment.fog_light_color = Color("a89a86")
         environment.fog_density = 0.0038
         environment.fog_sky_affect = 0.35
         environment.tonemap_mode = Environment.TONE_MAPPER_ACES
         environment.tonemap_exposure = 1.06
+        # cinematic bloom: emissive windows / neon / streetlights glow
+        environment.glow_enabled = true
+        environment.glow_intensity = 0.6
+        environment.glow_strength = 1.05
+        environment.glow_bloom = 0.06
+        environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+        environment.glow_hdr_threshold = 1.05
+        environment.glow_hdr_scale = 1.6
         env.environment = environment
         add_child(env)
         sun = DirectionalLight3D.new()
         sun.rotation_degrees = Vector3(-52, 35, 0)
-        sun.light_color = Color("ffe0b0")
+        sun.light_color = Color("ffd9a8")
         sun.light_energy = 1.25
         sun.shadow_enabled = true
         sun.shadow_bias = 0.06
@@ -126,8 +139,11 @@ func _build_city() -> void:
         city = CityBuilder.new()
         city.name = "City"
         add_child(city)
-        city.build(self)
-        _interiors = city.build_interiors(self)
+        # v2.5 fix: parent city geometry to the City node itself (was: world,
+        # which left World._collect_night_materials scanning an empty node -
+        # the night window ramp never actually ran).
+        city.build(city)
+        _interiors = city.build_interiors(city)
         _collect_night_materials()
 
 func _collect_night_materials() -> void:
@@ -188,6 +204,26 @@ func play_opening_cinematic() -> void:
 # ---------------- phone ----------------
 var _phone: PhoneSystem
 var _call_banner: CallBanner
+
+func _build_landmarks() -> void:
+        ## The living layer: Cinder River (bridges + fish + marina), wildlife,
+        ## filling stations and the Cinder Line elevated train.
+        _river = CinderRiver.new()
+        _river.name = "CinderRiver"
+        add_child(_river)
+        _gas = GasStations.new()
+        _gas.name = "GasStations"
+        add_child(_gas)
+        _train = TrainLine.new()
+        _train.name = "TrainLine"
+        add_child(_train)
+        _wildlife = Wildlife.new()
+        _wildlife.name = "Wildlife"
+        add_child(_wildlife)
+        _wildlife.setup(player, city.lamp_positions)
+        EventBus.camera_shake_requested.connect(func(mag, time):
+                if camera_rig:
+                        camera_rig.shake(mag, time))
 
 func _setup_phone() -> void:
         _phone = PhoneSystem.new()
@@ -350,8 +386,44 @@ func _wire_missions() -> void:
         MissionSystem.marker_cleared.connect(_clear_markers)
         MissionSystem.vehicle_spawn_requested.connect(_spawn_mission_vehicle)
         MissionSystem.cinematic_requested.connect(func(beat): _play_beat(beat))
+        MissionSystem.pickup_spawn_requested.connect(_spawn_mission_pickup)
+        EventBus.mission_started.connect(_on_mission_started)
         EventBus.enemy_downed.connect(_check_wave_cleared)
         EventBus.mission_completed.connect(func(_id): _check_after_mission())
+
+
+func _on_mission_started(mission_id: String) -> void:
+        # cinematic chapter card on every campaign mission start
+        var def: Dictionary = MissionSystem.mission_def(mission_id)
+        if def.is_empty() or not def.has("chapter"):
+                return
+        if cinematic != null and cinematic.has_method("show_title_card"):
+                cinematic.show_title_card("CHAPTER %d - %s" % [int(def.get("chapter", 1)), Difficulty.tier_name()],
+                        String(def.get("title", mission_id)), String(def.get("briefing", "")))
+
+
+func _spawn_mission_pickup(item_id: String, pos: Vector3, count: int) -> void:
+        for i in maxi(1, count):
+                var pickup := Node3D.new()
+                pickup.position = pos + Vector3(_rng.randf_range(-4, 4), 0.4, _rng.randf_range(-4, 4))
+                var box := MeshInstance3D.new()
+                var m := BoxMesh.new()
+                m.size = Vector3(0.5, 0.3, 0.4)
+                box.mesh = m
+                var mat := StandardMaterial3D.new()
+                mat.albedo_color = Color(0.55, 0.85, 0.4)
+                mat.emission_enabled = true
+                mat.emission = Color(0.5, 0.95, 0.35)
+                mat.emission_energy_multiplier = 1.6
+                box.material_override = mat
+                pickup.add_child(box)
+                var glow := OmniLight3D.new()
+                glow.omni_range = 5.0
+                glow.light_color = Color(0.5, 0.95, 0.35)
+                pickup.add_child(glow)
+                pickup.add_to_group("collectible")
+                pickup.set_meta("mission_item", item_id)
+                add_child(pickup)
 
 
 func _spawn_mission_enemies(mission_id: String, wave: Dictionary) -> void:
@@ -367,9 +439,17 @@ func _spawn_mission_enemies(mission_id: String, wave: Dictionary) -> void:
                 "yard_guards": spawn_at = Vector3(-360, 0, 300)
                 "meet_ambush": spawn_at = Vector3(-330, 0, 560)
                 "villa_guards": spawn_at = Vector3(120, 0, -620)
+                "villa_elite": spawn_at = Vector3(126, 0, -612)
                 "rowdy_patrons": spawn_at = Vector3(-240, 0, -180)
                 "strike_breakers": spawn_at = Vector3(-380, 0, 250)
+                "sparring_partner": spawn_at = Vector3(-200, 0, 560)
+                "tower_security": spawn_at = Vector3(240, 0, -200)
         var is_boss: bool = wave_id == "lucy_boss"
+        # difficulty director: later chapters field tougher crews
+        var hp_mult := Difficulty.hp_mult()
+        var dmg_mult := Difficulty.dmg_mult()
+        if not is_boss:
+                count += Difficulty.count_bonus()
         for i in count:
                 var e := Combatant.new()
                 var hp := 55.0
@@ -380,9 +460,20 @@ func _spawn_mission_enemies(mission_id: String, wave: Dictionary) -> void:
                 elif wave_id == "lucy_miniboss":
                         hp = 90.0
                         dmg = 11.0
+                elif wave_id == "villa_elite":
+                        hp = 95.0
+                        dmg = 12.0
                 elif wave_id == "villa_guards" or wave_id == "meet_ambush":
                         hp = 70.0
                         dmg = 10.0
+                elif wave_id == "tower_security":
+                        hp = 65.0
+                        dmg = 9.0
+                elif wave_id == "sparring_partner":
+                        hp = 80.0
+                        dmg = 6.0
+                hp *= hp_mult
+                dmg *= dmg_mult
                 var boss_name := "Vetch Muscle"
                 if is_boss and i == 0:
                         boss_name = "Lucy Fang"
@@ -584,14 +675,25 @@ func _update_day_night(delta: float) -> void:
         # sun rotation: dawn east, dusk west
         var day_t := h / 24.0
         sun.rotation_degrees = Vector3(-20.0 - (70.0 * sin(PI * clamp(day_t, 0.0, 1.0))), 35.0, 0.0)
-        sun.light_energy = lerp(1.35, 0.04, night_f)
-        sun.light_color = Color("fff2d8").lerp(Color("40466e"), night_f)
+        sun.light_energy = lerp(1.35, 0.09, night_f)
+        # golden hour: sun goes amber-orange as it sets, then cool moonlight
+        var dusk_f: float = clampf((h - 16.5) / 2.0, 0.0, 1.0) * (1.0 - clampf((h - 19.5) / 1.5, 0.0, 1.0))
+        var sun_col := Color("fff2d8").lerp(Color("ff9540"), dusk_f)
+        sun_col = sun_col.lerp(Color("40466e"), night_f)
+        sun.light_color = sun_col
         var sky_mat := (env.environment.sky.sky_material as ProceduralSkyMaterial)
-        sky_mat.sky_top_color = Color("3f5a8c").lerp(Color("0a0d1a"), night_f)
-        sky_mat.sky_horizon_color = Color("9db3c8").lerp(Color("141827"), night_f)
-        sky_mat.ground_horizon_color = Color("8a8873").lerp(Color("101014"), night_f)
-        env.environment.ambient_light_energy = lerp(0.75, 0.16, night_f)
-        env.environment.fog_light_color = Color("8fa0b0").lerp(Color("0d0e14"), night_f)
+        sky_mat.sky_top_color = Color("36517e").lerp(Color("0a0d1a"), night_f)
+        sky_mat.sky_horizon_color = Color("c9a37c").lerp(Color("e8853a"), dusk_f * 0.55).lerp(Color("141827"), night_f)
+        sky_mat.ground_horizon_color = Color("7c6f56").lerp(Color("101014"), night_f)
+        env.environment.ambient_light_energy = lerp(0.75, 0.30, night_f)
+        env.environment.fog_light_color = Color("a89a86").lerp(Color("c07a45"), dusk_f * 0.6).lerp(Color("141a2c"), night_f)
+        # bloom breathes with the hour: subtle at noon, strong for neon night
+        env.environment.glow_intensity = lerp(0.5, 0.95, maxf(dusk_f, night_f))
+        # landmark glow: gas station canopies, train windows/signs
+        if _gas != null:
+                _gas.set_night_glow(night_f)
+        if _train != null:
+                _train.set_night_glow(night_f)
         # building window emission ramps up at night
         for e in _night_materials:
                 var m: StandardMaterial3D = e["mat"]
@@ -600,9 +702,9 @@ func _update_day_night(delta: float) -> void:
         if night_f > 0.3 and _lamp_lights.is_empty():
                 for i in 8:
                         var l := OmniLight3D.new()
-                        l.omni_range = 15.0
+                        l.omni_range = 16.0
                         l.light_color = Color("ffbe6e")
-                        l.light_energy = 1.3
+                        l.light_energy = 1.8
                         l.shadow_enabled = false
                         add_child(l)
                         _lamp_lights.append(l)
@@ -617,7 +719,7 @@ func _update_day_night(delta: float) -> void:
                                 if i < sorted.size():
                                         (_lamp_lights[i] as OmniLight3D).position = Vector3((sorted[i] as Vector2).x + 1.2, 4.55, (sorted[i] as Vector2).y)
         for l in _lamp_lights:
-                l.light_energy = 1.3 * night_f * (1.0 if WorldEvents.neon_lights_on() else 0.4)
+                l.light_energy = 1.8 * night_f * (1.0 if WorldEvents.neon_lights_on() else 0.4)
         # rain
         var rain: float = TimeWeather.rain_intensity
         rain_particles.visible = rain > 0.05
@@ -803,6 +905,13 @@ func _maintain_collectibles() -> void:
                         var d: float = player.global_position.distance_to(c.global_position)
                         if d < 1.6:
                                 var cid: String = str(c.get_meta("collectible_id", ""))
+                                var mission_item := str(c.get_meta("mission_item", ""))
+                                if mission_item != "":
+                                        MissionSystem.notify_item_collected(mission_item)
+                                        EventBus.notification_posted.emit("Picked up: " + mission_item.replace("_", " "), "mission")
+                                        EventBus.sfx_requested.emit("sfx_token", player.global_position)
+                                        c.queue_free()
+                                        continue
                                 if not GameState.collectibles_found.has(cid):
                                         GameState.collectibles_found[cid] = true
                                         GameState.player_stats["collectibles_found"] += 1

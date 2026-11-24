@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmp1shot5cene"]
+
+[ext_resource type="Script" path="res://tests/compare_shot.gd" id="1_cmp"]
+
+[node name="CompareShotProbe" type="Node"]
+script = ExtResource("1_cmp")

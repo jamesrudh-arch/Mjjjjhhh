@@ -95,6 +95,10 @@ signal music_layer_requested(mood: String)
 signal ambience_area_changed(area_id: String)
 signal sfx_requested(sfx_id: String, position: Vector3)
 
+# --- World / feel ---
+signal camera_shake_requested(mag: float, time: float)
+signal explosive_damaged(node: Node, damage: float, source: Node3D)
+
 # --- Save system ---
 signal save_completed(slot: int)
 signal load_completed(slot: int)

@@ -1,9 +1,9 @@
 extends Node
-## Boot sequence: D'Youngs Games presentation -> LEVERAGE title -> content
-## notice -> main menu. All cards are code-built; timing is frame-driven so
-## it also runs in headless tests (auto-skip when test mode).
+## Boot sequence: DE YOUNG GAMES animated ident -> LEVERAGE title ->
+## content notice -> main menu. All cards are code-built; timing is
+## frame-driven so it also runs in headless tests (auto-skip when test mode).
 
-const CARD_COMPANY := 2.4
+const CARD_COMPANY := 3.2
 const CARD_TITLE := 3.0
 const CARD_NOTICE := 2.2
 
@@ -44,22 +44,13 @@ func _build() -> void:
 
         root.add_child(LvgTheme.color_rect(LvgTheme.BLACK))
 
-        # --- Card 1: D'YOUNGS GAMES ---
+        # --- Card 1: DE YOUNG GAMES animated ident ---
         var company := Control.new()
         company.set_anchors_preset(Control.PRESET_FULL_RECT)
         company.mouse_filter = Control.MOUSE_FILTER_IGNORE
         root.add_child(company)
-        var v := VBoxContainer.new()
-        v.set_anchors_preset(Control.PRESET_CENTER)
-        v.alignment = BoxContainer.ALIGNMENT_CENTER
-        v.add_theme_constant_override("separation", 18)
-        company.add_child(v)
-        var mark := _dyoungs_mark()
-        v.add_child(mark)
-        var name_l := LvgTheme.make_display_label("D'YOUNGS GAMES", 64, LvgTheme.TEXT)
-        v.add_child(name_l)
-        var tagl := LvgTheme.make_label("P R E S E N T S", 26, LvgTheme.TEXT_DIM)
-        v.add_child(tagl)
+        var logo := DeYoungLogo.new()
+        company.add_child(logo)
 
         # --- Card 2: LEVERAGE title ---
         var title := Control.new()
@@ -71,6 +62,8 @@ func _build() -> void:
         v2.alignment = BoxContainer.ALIGNMENT_CENTER
         v2.add_theme_constant_override("separation", 26)
         title.add_child(v2)
+        var prod := LvgTheme.make_label("A  DE YOUNG GAMES  PRODUCTION", 30, LvgTheme.TEXT_DIM)
+        v2.add_child(prod)
         var big := LvgTheme.make_display_label("LEVERAGE", 170, LvgTheme.ACCENT)
         v2.add_child(big)
         var rule := _amber_rule(420)
@@ -100,21 +93,6 @@ func _build() -> void:
                 c.modulate.a = 0.0
 
 
-func _dyoungs_mark() -> Control:
-        # Prism diamond mark drawn with Polygon2D-esque draw on a Control.
-        var c := Control.new()
-        c.custom_minimum_size = Vector2(120, 120)
-        c.draw.connect(func():
-                var w := 120.0
-                var h := 120.0
-                var pts := PackedVector2Array([Vector2(w / 2, 8), Vector2(w - 10, h * 0.72), Vector2(w / 2, h - 8), Vector2(10, h * 0.72)])
-                c.draw_colored_polygon(pts, Color(LvgTheme.ACCENT.r * 0.35, LvgTheme.ACCENT.g * 0.35, LvgTheme.ACCENT.b * 0.35))
-                c.draw_polyline(pts, LvgTheme.ACCENT, 5.0)
-                c.draw_circle(Vector2(w / 2, h * 0.5), 7.0, LvgTheme.ACCENT)
-        )
-        return c
-
-
 func _amber_rule(width: float) -> Control:
         var c := Control.new()
         c.custom_minimum_size = Vector2(width, 4)
@@ -125,12 +103,18 @@ func _amber_rule(width: float) -> Control:
         return c
 
 
+var _sting_played := false
+
+
 func _process(delta: float) -> void:
         _t += delta
         if _test_mode:
                 _go_menu()
                 set_process(false)
                 return
+        if not _sting_played:
+                _sting_played = true
+                EventBus.sfx_requested.emit("sfx_logo_sting", Vector3.ZERO)
         match _stage:
                 0:
                         _cards[0].modulate.a = min(_t / 0.8, 1.0)

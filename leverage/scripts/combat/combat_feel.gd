@@ -9,7 +9,9 @@ class_name CombatFeel
 
 static var _hitstop_token := 0
 static var _impact_pool: Array[CPUParticles3D] = []
+static var _spark_pool: Array[CPUParticles3D] = []
 static var _pool_root: Node = null
+const POOL_MAX := 20
 
 
 ## Brief time freeze on connect. scale 0.05 = near-freeze, 0.35 = soft dip.
@@ -30,20 +32,38 @@ static func slow_mo(scale := 0.35, duration := 0.8) -> void:
         hit_stop(scale, duration)
 
 
-## Impact particle burst at a world position (dust + spark flecks).
+## Impact presentation: directional hit cone (dust kick + additive sparks)
+## scaled by strength. dir = the direction the blow travels (hit normal).
 ## Pooled CPUParticles3D, one-shot, auto-deactivates. Mobile-renderer safe.
-static func spawn_impact(pos: Vector3, strength := 1.0) -> void:
+static func spawn_impact(pos: Vector3, strength := 1.0, dir := Vector3.UP) -> void:
         var root := _root()
         if root == null:
                 return
-        var p: CPUParticles3D = _take_particle(root)
-        if p == null:
-                return
-        p.global_position = pos
-        p.amount = int(clamp(6.0 * strength, 4.0, 18.0))
-        p.initial_velocity_min = 1.2 * clamp(strength, 0.6, 2.0)
-        p.initial_velocity_max = 2.6 * clamp(strength, 0.6, 2.0)
-        p.restart()
+        var s: float = clampf(strength, 0.6, 2.4)
+        # dust: broad, tan, short-lived
+        var p: CPUParticles3D = _take_particle(root, _impact_pool, _make_dust)
+        if p:
+                p.global_position = pos
+                p.direction = dir.normalized()
+                p.spread = 55.0
+                p.amount = int(8.0 * s)
+                p.initial_velocity_min = 1.4 * s
+                p.initial_velocity_max = 3.2 * s
+                p.scale_amount_min = 0.05
+                p.scale_amount_max = 0.13 * s
+                p.restart()
+        # sparks: tight, bright, additive - the "crunch" of the hit
+        var sp: CPUParticles3D = _take_particle(root, _spark_pool, _make_spark)
+        if sp:
+                sp.global_position = pos
+                sp.direction = (dir.normalized() + Vector3(0, 0.6, 0)).normalized()
+                sp.spread = 38.0
+                sp.amount = int(5.0 * s)
+                sp.initial_velocity_min = 2.6 * s
+                sp.initial_velocity_max = 5.4 * s
+                sp.scale_amount_min = 0.03
+                sp.scale_amount_max = 0.07 * s
+                sp.restart()
 
 
 static func _tree() -> SceneTree:
@@ -62,29 +82,50 @@ static func _root() -> Node:
         return _pool_root
 
 
-static func _take_particle(root: Node) -> CPUParticles3D:
-        for p in _impact_pool:
+static func _take_particle(root: Node, pool: Array[CPUParticles3D], factory: Callable) -> CPUParticles3D:
+        for p in pool:
                 if is_instance_valid(p) and not p.emitting:
                         return p
-        if _impact_pool.size() >= 14:
+        if pool.size() >= POOL_MAX:
                 return null
+        var p: CPUParticles3D = factory.call()
+        root.add_child.call_deferred(p)
+        pool.append(p)
+        return p
+
+
+static func _make_dust() -> CPUParticles3D:
         var p := CPUParticles3D.new()
         p.one_shot = true
-        p.lifetime = 0.45
+        p.lifetime = 0.5
         p.explosiveness = 1.0
-        p.spread = 70.0
-        p.gravity = Vector3(0, -6.0, 0)
-        p.scale_amount_min = 0.03
-        p.scale_amount_max = 0.08
+        p.gravity = Vector3(0, -7.0, 0)
         p.direction = Vector3(0, 1, 0)
         p.emitting = false
         var mesh := QuadMesh.new()
-        mesh.size = Vector2(0.06, 0.06)
+        mesh.size = Vector2(0.11, 0.11)
         var mat := StandardMaterial3D.new()
-        mat.albedo_color = Color(0.9, 0.86, 0.78, 0.75)
+        mat.albedo_color = Color(0.88, 0.82, 0.7, 0.8)
         mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
         mesh.material = mat
         p.mesh = mesh
-        root.add_child.call_deferred(p)
-        _impact_pool.append(p)
+        return p
+
+
+static func _make_spark() -> CPUParticles3D:
+        var p := CPUParticles3D.new()
+        p.one_shot = true
+        p.lifetime = 0.32
+        p.explosiveness = 1.0
+        p.gravity = Vector3(0, -16.0, 0)
+        p.direction = Vector3(0, 1, 0)
+        p.emitting = false
+        var mesh := QuadMesh.new()
+        mesh.size = Vector2(0.05, 0.05)
+        var mat := StandardMaterial3D.new()
+        mat.albedo_color = Color(1.0, 0.72, 0.32, 0.95)
+        mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+        mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+        mesh.material = mat
+        p.mesh = mesh
         return p

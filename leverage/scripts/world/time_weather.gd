@@ -6,7 +6,7 @@ extends Node
 const MINUTES_PER_REAL_SECOND := 1.0   # 1 real second = 1 game minute -> 24h day = 24 min
 const HOURS_PER_DAY := 24.0
 
-var _elapsed_hours := 8.0            # new game starts 08:00 day 1
+var _elapsed_hours := 17.4           # new game starts 17:24 day 1 - golden hour
 var day_count := 1
 var current_weather := "clear"
 var _weather_timer := 120.0

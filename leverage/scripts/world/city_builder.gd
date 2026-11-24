@@ -7,25 +7,25 @@ extends Node3D
 ## per prop/building type (mobile draw-call budget); static box collision.
 
 const BUILDING_TYPES := [
-        "res://assets/buildings/b_brick2.glb",
-        "res://assets/buildings/b_brick3.glb",
-        "res://assets/buildings/b_brick4.glb",
-        "res://assets/buildings/b_brick_tan.glb",
-        "res://assets/buildings/b_ware1.glb",
-        "res://assets/buildings/b_ware2.glb",
-        "res://assets/buildings/b_ware3.glb",
-        "res://assets/buildings/b_tower1.glb",
-        "res://assets/buildings/b_tower2.glb",
-        "res://assets/buildings/b_tower3.glb",
-        "res://assets/buildings/b_shop1.glb",
-        "res://assets/buildings/b_shop2.glb",
-        "res://assets/buildings/b_shop3.glb",
-        "res://assets/buildings/b_house1.glb",
-        "res://assets/buildings/b_house2.glb",
-        "res://assets/buildings/b_house3.glb",
-        "res://assets/buildings/b_bank.glb",
-        "res://assets/buildings/b_hospital.glb",
-        "res://assets/buildings/b_hotel.glb",
+        "res://assets/buildings/b_brick2.gltf",
+        "res://assets/buildings/b_brick3.gltf",
+        "res://assets/buildings/b_brick4.gltf",
+        "res://assets/buildings/b_brick_tan.gltf",
+        "res://assets/buildings/b_ware1.gltf",
+        "res://assets/buildings/b_ware2.gltf",
+        "res://assets/buildings/b_ware3.gltf",
+        "res://assets/buildings/b_tower1.gltf",
+        "res://assets/buildings/b_tower2.gltf",
+        "res://assets/buildings/b_tower3.gltf",
+        "res://assets/buildings/b_shop1.gltf",
+        "res://assets/buildings/b_shop2.gltf",
+        "res://assets/buildings/b_shop3.gltf",
+        "res://assets/buildings/b_house1.gltf",
+        "res://assets/buildings/b_house2.gltf",
+        "res://assets/buildings/b_house3.gltf",
+        "res://assets/buildings/b_bank.gltf",
+        "res://assets/buildings/b_hospital.gltf",
+        "res://assets/buildings/b_hotel.gltf",
 ]
 
 const AREA_BIAS := {
@@ -41,6 +41,28 @@ const ROAD_W := 12.0
 const SIDEWALK_W := 3.4
 const CURB_H := 0.16
 const BLOCK_MARGIN := 24.0
+
+## Landmark keep-out zones (gas stations, rail stations) for buildings/props.
+const LANDMARK_EXCLUDE := [
+        {"pos": Vector2(-180, 150), "r": 27.0},
+        {"pos": Vector2(350, 60), "r": 27.0},
+        {"pos": Vector2(-300, -340), "r": 32.0},
+        {"pos": Vector2(300, -340), "r": 32.0},
+]
+const RAIL_Z := -340.0
+
+
+func _blocked(p: Vector2, extra := 0.0) -> bool:
+        ## True when p falls in the river band, the rail corridor or a
+        ## landmark keep-out zone (buildings/props must not spawn there).
+        if CinderRiver.in_river_band(p.x, maxf(0.0, 4.0 + extra)):
+                return true
+        if absf(p.y - RAIL_Z) < 9.0 + extra:
+                return true
+        for z in LANDMARK_EXCLUDE:
+                if p.distance_to(z["pos"]) < float(z["r"]) + extra:
+                        return true
+        return false
 
 var _rng := RandomNumberGenerator.new()
 var _buildings: Array = []
@@ -125,9 +147,23 @@ func _build_ground(root: Node3D) -> void:
         var mi := MeshInstance3D.new()
         var pm := PlaneMesh.new()
         pm.size = Vector2(2400, 2400)
-        pm.subdivide_depth = 4
-        pm.subdivide_width = 4
-        mi.mesh = pm
+        pm.subdivide_depth = 220
+        pm.subdivide_width = 220
+        # carve the Cinder River channel into the terrain and fix normals
+        var arrays: Array = pm.surface_get_arrays(0)
+        var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+        var norms: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+        for i in verts.size():
+                var vx := verts[i].x
+                if CinderRiver.in_river_band(vx, -CinderRiver.BANK):
+                        verts[i].y = CinderRiver.bank_y(vx)
+                        var dydx := CinderRiver.bank_dydx(vx)
+                        norms[i] = Vector3(-dydx, 1.0, 0.0).normalized()
+        arrays[Mesh.ARRAY_VERTEX] = verts
+        arrays[Mesh.ARRAY_NORMAL] = norms
+        var am := ArrayMesh.new()
+        am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+        mi.mesh = am
         var mat := _mat_ground.duplicate()
         mat.albedo_color = Color(0.62, 0.68, 0.52)
         mat.uv1_scale = Vector3(90, 90, 90)
@@ -159,6 +195,11 @@ func _build_roads(root: Node3D) -> void:
                 seg.position = Vector3(center.x, 0.02, center.y)
                 seg.rotation.y = -angle
                 root.add_child(seg)
+                # dashed center line (v2.5: road_line_albedo finally wired)
+                var line := _center_line(length)
+                line.position = Vector3(center.x, 0.045, center.y)
+                line.rotation.y = -angle
+                root.add_child(line)
                 # curbs + sidewalks
                 var perp := Vector2(-dir.y, dir.x) * (w / 2.0 + SIDEWALK_W / 2.0)
                 for sx in [-1.0, 1.0]:
@@ -185,6 +226,26 @@ func _road_segment(length: float, w: float) -> MeshInstance3D:
         mat.uv1_scale = Vector3(length / 8.0, w / 12.0, 1.0)
         mi.set_material_override(mat)
         return mi
+
+
+func _center_line(length: float) -> MeshInstance3D:
+        ## Dashed center line along a road segment (thin box, runs along X -
+        ## same proven pattern as the crosswalk quads).
+        var mi := MeshInstance3D.new()
+        var bm := BoxMesh.new()
+        bm.size = Vector3(length, 0.02, 0.34)
+        mi.mesh = bm
+        var mat := StandardMaterial3D.new()
+        if ResourceLoader.exists("res://assets/textures/road_dash.png"):
+                mat.albedo_texture = load("res://assets/textures/road_dash.png")
+                mat.texture_repeat = true
+                mat.uv1_scale = Vector3(length / 9.0, 1.0, 1.0)
+        else:
+                mat.albedo_color = Color(0.9, 0.8, 0.35)
+        mat.roughness = 0.9
+        mi.set_material_override(mat)
+        return mi
+
 
 func _sidewalk(length: float) -> MeshInstance3D:
         var mi := MeshInstance3D.new()
@@ -221,7 +282,7 @@ func _build_city_blocks(root: Node3D) -> void:
                         while gz < rect.position.y + rect.size.y - BLOCK_MARGIN:
                                 var jitter := Vector2(_rng.randf_range(-5, 5), _rng.randf_range(-5, 5))
                                 var p := Vector2(gx, gz) + jitter
-                                if not _on_road_area(p, ROAD_W / 2.0 + SIDEWALK_W + 8.0) and not _too_close(p, 22.0):
+                                if not _on_road_area(p, ROAD_W / 2.0 + SIDEWALK_W + 8.0) and not _too_close(p, 22.0) and not _blocked(p):
                                         var type_idx: int = bias[_rng.randi_range(0, bias.size() - 1)]
                                         var rot: float = _rng.randf_range(-0.09, 0.09)
                                         if _rng.randf() < 0.5:
@@ -339,7 +400,8 @@ func _build_street_props(root: Node3D) -> void:
                 while t < length - 18.0:
                         var side := 1.0 if int(t / 34.0) % 2 == 0 else -1.0
                         var p := a + dir * t + perp * (ROAD_W / 2.0 + 2.6) * side
-                        lamp_positions.append({"pos": p, "rot": atan2(dir.y, dir.x) + PI})
+                        if not _blocked(p, -6.0):
+                                lamp_positions.append({"pos": p, "rot": atan2(dir.y, dir.x) + PI})
                         t += 34.0
         # spawn lamps as multimesh (both glb variants mixed by parity)
         _spawn_prop_multimesh(root, lamp_glbs[0], lamp_positions, 0.95)
@@ -368,7 +430,7 @@ func _build_street_props(root: Node3D) -> void:
                 while t < length - 12.0:
                         var side := 1.0 if int(t / 24.0) % 2 == 0 else -1.0
                         var p := a + dir * t + perp * (ROAD_W / 2.0 + SIDEWALK_W + 1.2) * side
-                        if not _on_road_area(p, ROAD_W / 2.0 - 2.0) and not _too_close(p, 20.0):
+                        if not _on_road_area(p, ROAD_W / 2.0 - 2.0) and not _too_close(p, 20.0) and not _blocked(p, -4.0):
                                 tree_positions.append({"pos": p, "rot": _rng.randf_range(0, TAU), "scale": _rng.randf_range(0.85, 1.2)})
                         t += 24.0
         var tree_glbs := ["res://assets/props/tree_a.glb", "res://assets/props/tree_b.glb", "res://assets/props/tree_c.glb"]
@@ -403,7 +465,7 @@ func _build_street_props(root: Node3D) -> void:
                                 if _rng.randf() < prob:
                                         var side := 1.0 if int(t / spacing) % 2 == 0 else -1.0
                                         var p := a + dir * t + perp * (ROAD_W / 2.0 + SIDEWALK_W * 0.55) * side
-                                        if not _too_close(p, 14.0) and not _on_road_area(p, ROAD_W / 2.0 - 1.5):
+                                        if not _too_close(p, 14.0) and not _on_road_area(p, ROAD_W / 2.0 - 1.5) and not _blocked(p, -6.0):
                                                 positions.append({"pos": p, "rot": atan2(dir.y, dir.x) + PI / 2.0})
                                 t += spacing
                 _spawn_prop_multimesh(root, f[0], positions, 1.0)

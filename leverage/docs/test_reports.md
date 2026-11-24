@@ -6,6 +6,11 @@ Method: headless Godot (`tools/Godot_v4.4.1-stable_linux.x86_64` primary — the
 
 | Date | Suite | Result | Environment | Notes |
 |---|---|---|---|---|
+| 2026-11-25 s14 (re-verify) | all suites (73 new v2.5 checks: world.river, world.wildlife, world.gas, world.train, brand.logo, combat.difficulty, city.buildings_v25, audio.v25) | **PASS 452/452** | 4.7.2 fresh `rm -rf .godot` + import | zero-assumption re-verify of the v2.5.0 tree; `tests/last_run.txt` refreshed on this run |
+| 2026-11-25 s14 (re-verify) | all suites | **PASS 452/452** | 4.4.1 fresh import | 0 SCRIPT ERRORs |
+| 2026-11-25 s14 (re-verify) | all suites | **PASS 401/401** | 4.4.1 `--main-pack leverage.pck` (31.8 MB) | **from-pack proof for the shipped v2.5.0 PCK** (51 enumeration checks are project-dir-only, same pattern as every version) |
+| 2026-11-25 s14 (zip check) | import only | **0 errors** | 4.7.2 import of the extracted `LEVERAGE_v2.5.0_XOGOT_project.zip` in a clean dir | device-zip integrity proof (cache accepted, no import errors) |
+| 2026-11-24 s13 | all suites + 8 new v2.5 suites | **PASS 452/452** | 4.4.1 project dir | v2.5.0 "The Living City" build run (river/wildlife/train/gas/logo/difficulty/buildings/audio; recorded in changelog; session ended before this table was updated — s14 re-verified everything above) |
 | 2026-11-23 s2 | all 8 suites | **PASS 215/215** | 4.4.1 project dir | first full green run |
 | 2026-11-24 s10 (audit, pre-change) | all suites | **PASS 334/334** | 4.4.1 fresh `rm -rf .godot` + import | v2.3.2 re-verified from scratch — no assumptions carried |
 | 2026-11-24 s10 (audit, pre-change) | all suites | **PASS 292/292** | 4.4.1 `--main-pack` (fresh export) | v2.3.2 from-pack re-verified |

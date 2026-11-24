@@ -31,7 +31,7 @@ So: **10/10 on everything this environment can deliver, with the single Device-o
 | Pillar | Evidence | Status |
 |---|---|---|
 | Environment investigated first; docs-verified decisions | development_state §Environment; TDL #1–14 with sources | Verified |
-| LEVERAGE identity + opening flow (D'YOUNGS GAMES → title → notice → menu → cinematic → tutorial entry) | boot.flow suite (full real card timeline); renders 01–05 | Tested |
+| LEVERAGE identity + opening flow (DE YOUNG GAMES → title → notice → menu → cinematic → tutorial entry) | boot.flow suite (full real card timeline); renders 01–05 | Tested |
 | 5 combat disciplines, distinct, animated | combat.disciplines suite: 34 checks incl. per-anim library existence + distinctness proof | Tested |
 | Fixed control map X=punch Y=heavy A=kick B=dodge; touch parity | input_router; ui.touch fixed-mapping checks | Tested |
 | Weapons + armour | weapon GLBs (CC0), aim/shoot/reload paths; armour stat through damage math + shops/pickups | Tested / Implemented |
@@ -78,7 +78,7 @@ So: **10/10 on everything this environment can deliver, with the single Device-o
 **Re-verify everything yourself (2 minutes):**
 `LEVERAGE_TEST=1 tools/Godot_v4.4.1-stable_linux.x86_64 --headless res://tests/test_runner.tscn` → expect `238 checks, 0 failed`.
 
-— D'YOUNGS GAMES. Everyone has leverage on you.
+— DE YOUNG GAMES. Everyone has leverage on you.
 
 
 ---
@@ -93,3 +93,56 @@ Per user direction ("totally trash... rebuild visual direction, replace inadequa
 - Campaign: 13 missions + endings resolve end-to-end (mission-journey suite).
 - PCK rebuilt: leverage.pck (77 MB — texture dedup is the documented top optimization).
 - Device-only remains: iPhone + XOGOT install/run verification per docs/final_verification_guide.md.
+
+
+---
+
+# v2.5.0 "The Living City" — Delivery Addendum (session 13)
+
+**What changed since v2.4.0:** the city itself. The river, the wildlife, the
+train, the filling stations, the DE YOUNG GAMES ident, the conversational
+opening, rebuilt modular buildings with lit windows and neon, lane markings,
+difficulty ramp, deeper missions, cinematic fonts, 10 new SFX, the story
+bible — every item the "10/10, nothing exempted" review called out.
+
+## Deliverables (this session)
+| File | Bytes | sha256 (first 16) |
+| --- | --- | --- |
+| LEVERAGE_v2.5.0_XOGOT_project.zip | 126,995,492 | 7d9a7a5d1aa2ef13 |
+| LEVERAGE_2.5.0.pck | 31,801,872 | 8f2c4a8b86d56af8 |
+| LEVERAGE_hello_diag_project.zip | 5,818 | 5ae7680cf14a8119 |
+
+**iPhone (XOGOT): install the v2.5.0 XOGOT project zip.** Desktop Godot
+4.4-4.6: run the PCK. Building payload fell 29 MB -> 5 MB, so the PCK is
+31.8 MB (was 44.2).
+
+## Verification (all run this session, from this tree)
+- **452/452 checks** on Godot 4.4.1 headless (73 new checks for river,
+  wildlife, gas, train, explosions, logo, fonts, difficulty, mission depth,
+  buildings, SFX bank).
+- **401/401 from-pack** (pack mode skips project-dir enumeration suites —
+  same behavior as previous sessions).
+- **Real-boot render battery** under Xvfb (OpenGL3 approximation of the
+  Mobile renderer; the device adds bloom) with **VLM verification** of every
+  new system — docs/evidence/session13/:
+  - 01 DE YOUNG ident — VLM: "professionally styled studio ident" (badge,
+    divider, PRESENTS, animating wordmark).
+  - 06 old-quarter street at dusk — VLM PASS: dashed lane markings,
+    pedestrians, brick buildings with white-framed windows + warm lit
+    windows, cinematic dusk mood.
+  - 07 Cinder Line — VLM: concrete viaduct + train with lit windows.
+  - 08/09b/10 — gas station canopy at dusk; neon storefront close-up
+    (pink/orange HDR signs); night street (VLM: "neon accents against
+    near-black is exactly the right crime-noir palette").
+  - 11/12 building beauty + line test renders.
+- Latent v2.4.0 defect found and fixed while integrating: city geometry was
+  parented to the world node, so the night window-emission ramp never ran.
+  Now `city.build(city)` — night windows and neon ramp correctly (26
+  materials collected).
+
+## Known notes
+- The intro conversation: tap X advances, hold X (0.7 s) skips.
+- Evidence renders use the software GL renderer (no bloom); on-device
+  Forward Mobile applies glow to every HDR emissive (windows, neon, signs).
+- D22 remains: `--check-only` cannot resolve autoloads (both engines); the
+  suite is the compile gate.

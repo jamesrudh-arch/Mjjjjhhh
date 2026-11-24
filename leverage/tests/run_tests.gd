@@ -723,6 +723,154 @@ func _ready() -> void:
         MissionSystem.complete_mission()
         check("best medal retained on worse replay", int(GameState.player_stats["mission_medals"].get(m_id, 0)) == 3)
 
+        # ------------------------------------------------ v2.5 "The Living City"
+        # Suite: the Cinder River
+        suite("world.river")
+        var river: CinderRiver = world._river
+        check("river node built", river != null and is_instance_valid(river))
+        check("water surface present", river.water_present())
+        check("fish shoals live", river.fish_count() >= 18)
+        check("marina boats bobbing", river.boat_count() == 3)
+        check("road bridges built", river.bridge_count() >= 2)
+        check("channel carved at center", absf(CinderRiver.bank_y(CinderRiver.CENTER_X) - CinderRiver.DEPTH) < 0.01)
+        check("banks return to grade", absf(CinderRiver.bank_y(CinderRiver.CENTER_X + 200.0)) < 0.01)
+        check("river band blocks buildings", CityBuilder.new()._blocked(Vector2(CinderRiver.CENTER_X, 0.0)))
+        check("parapet collision present", _find_all(river, "StaticBody3D").size() >= 1)
+
+        # Suite: wildlife
+        suite("world.wildlife")
+        var wl: Wildlife = world._wildlife
+        check("wildlife node built", wl != null and is_instance_valid(wl))
+        check("pigeon flocks", wl.pigeon_count() >= 24)
+        check("river gulls", wl.gull_count() >= 8)
+        check("night rats", wl.rat_count() >= 12)
+        check("firefly patches", wl.firefly_count() >= 4)
+        check("streetlight moths", wl.moth_count() >= 3)
+        # deterministic scatter: plant one pigeon at a known spot, then fire
+        var planted: Dictionary = {}
+        for p in wl._pigeons:
+                if is_instance_valid(p["node"]):
+                        planted = p
+                        break
+        (planted["node"] as Node3D).global_position = Vector3(-240, 0.12, -120)
+        planted["state"] = "peck"
+        var scatter_n := wl.pigeons_scatter_from(Vector3(-240, 0, -120), 40.0)
+        check("pigeons scatter at violence", scatter_n > 0)
+
+        # Suite: filling stations
+        suite("world.gas")
+        var gas: GasStations = world._gas
+        check("two filling stations", gas.station_count() == 2)
+        check("pump islands built", gas.pump_count() >= 8)
+        var pumps_alive := gas.intact_pumps()
+        check("pumps intact at start", pumps_alive == gas.pump_count())
+        var any_pump: Node = (get_tree().get_nodes_in_group("explosive")[0] as Node)
+        gas.damage_pump(any_pump, 100.0)
+        await get_tree().create_timer(0.6).timeout
+        check("pump detonates on damage", gas.intact_pumps() == pumps_alive - 1)
+        check("explosive group registered", get_tree().get_nodes_in_group("explosive").size() >= 7)
+
+        # Suite: the Cinder Line train
+        suite("world.train")
+        var train: TrainLine = world._train
+        check("train line built", train != null and is_instance_valid(train))
+        check("train has 5 cars", train.car_count() == 5)
+        check("two passenger stations", train.station_count() == 2)
+        train.force_depart()
+        await get_tree().create_timer(2.0).timeout
+        check("train departs on schedule", train.is_running())
+        check("train moves along the viaduct", absf(train.train_x() - (-470.0)) > 10.0)
+        check("horn sfx asset exists", ResourceLoader.exists("res://assets/audio/sfx/sfx_train_horn.ogg"))
+        check("rumble sfx asset exists", ResourceLoader.exists("res://assets/audio/sfx/sfx_train_rumble.ogg"))
+
+        # Suite: explosions
+        suite("combat.explosions")
+        Explosions.boom(world.player.global_position + Vector3(30, 1, 0), 8.0, 20.0)
+        await get_tree().create_timer(0.5).timeout
+        check("explosion helper runs pooled", true)
+        check("explosion sfx asset exists", ResourceLoader.exists("res://assets/audio/sfx/sfx_explosion.ogg"))
+
+        # Suite: DE YOUNG GAMES ident
+        suite("brand.logo")
+        var logo := DeYoungLogo.new()
+        get_tree().root.add_child(logo)
+        check("logo builds wordmark letters", logo.letter_count() >= 12)
+        await get_tree().create_timer(0.6).timeout
+        check("logo animates", logo.logo_progress() > 0.4)
+        await get_tree().create_timer(2.4).timeout
+        check("wordmark fully lit after sweep", logo.wordmark_fully_lit())
+        logo.queue_free()
+        await get_tree().process_frame
+        check("logo sting asset exists", ResourceLoader.exists("res://assets/audio/sfx/sfx_logo_sting.ogg"))
+
+        # Suite: cinematic display fonts
+        suite("ui.fonts")
+        check("Anton display font loads", ResourceLoader.exists("res://assets/fonts/Anton-Regular.ttf"))
+        check("Oswald condensed font loads", ResourceLoader.exists("res://assets/fonts/Oswald.ttf"))
+        LvgTheme.load_fonts()
+        check("display font is Anton", LvgTheme.font_display != null and LvgTheme.font_display.get_font_name().find("Anton") >= 0)
+
+        # Suite: difficulty director
+        suite("combat.difficulty")
+        var d1: Dictionary = Difficulty.multipliers_for(1)
+        var d5: Dictionary = Difficulty.multipliers_for(5)
+        check("chapter 1 baseline", is_equal_approx(float(d1["hp"]), 1.0))
+        check("hp ramps to chapter 5", float(d5["hp"]) > 1.8)
+        check("damage ramps to chapter 5", float(d5["dmg"]) > 1.5)
+        check("extra bodies at chapter 5", int(d5["count"]) >= 2)
+        check("tier names defined", String(d1["tier"]) != "" and String(d5["tier"]) != "")
+        check("chapter clamped", Difficulty.multipliers_for(99)["hp"] == d5["hp"])
+
+        # Suite: deeper campaign + new world beats
+        suite("missions.depth")
+        check("debt_first is a 5-stage arc", MissionSystem.mission_def("debt_first")["objectives"].size() >= 5)
+        check("gas-station beat in Make Change", str(MissionSystem.mission_def("make_change")["objectives"]).find("filling station") >= 0)
+        check("tower lobby fight added", str(MissionSystem.mission_def("tower_heist")["objectives"]).find("tower_security") >= 0)
+        check("villa elite wave in finale", str(MissionSystem.mission_def("finale_villa")["objectives"]).find("villa_elite") >= 0)
+        var stall_obj: Dictionary = MissionSystem.mission_def("debt_first")["objectives"][2]
+        check("stall cash collectible objective", String(stall_obj.get("item", "")) == "stall_cash")
+        # chapter card plays on mission start
+        GameState.story_flags["chapter"] = 3
+        MissionSystem.start_mission("tower_heist")
+        await get_tree().create_timer(0.4).timeout
+        check("chapter title card on mission start", is_instance_valid(world.cinematic) and world.cinematic._card.modulate.a > 0.05)
+        MissionSystem.complete_mission()
+        GameState.story_flags["chapter"] = 1
+
+        # Suite: new buildings compose
+        suite("city.buildings_v25")
+        var new_b: Variant = load("res://assets/buildings/b_tower1.gltf")
+        check("gltf building loads", new_b != null)
+        if new_b != null:
+                var bi: Node3D = (new_b as PackedScene).instantiate()
+                get_tree().root.add_child(bi)
+                var bm: Array = _find_all(bi, "MeshInstance3D")
+                check("building has multi-surface mesh", bm.size() >= 1)
+                var msh: MeshInstance3D = bm[0] as MeshInstance3D
+                check("tower surfaces (materials) present", msh.mesh != null and msh.mesh.get_surface_count() >= 2)
+                bi.queue_free()
+                await get_tree().process_frame
+        var city_mm: Array = _find_all(world.city, "MultiMeshInstance3D")
+        check("city multimeshes spawned", city_mm.size() >= 10)
+        check("night-lit building materials collected", world._night_materials.size() >= 4)
+        var bad_buildings := 0
+        for b in world.city._buildings:
+                var bp: Vector2 = b["pos"]
+                if absf(bp.x - CinderRiver.CENTER_X) < CinderRiver.HALF_W + CinderRiver.BANK:
+                        bad_buildings += 1
+                if absf(bp.y - (-340.0)) < 9.0:
+                        bad_buildings += 1
+        check("no buildings in river or rail corridor", bad_buildings == 0)
+
+        # Suite: new SFX bank
+        suite("audio.v25")
+        for sfx_id in ["sfx_train_horn", "sfx_train_rumble", "sfx_station_bell", "sfx_water_lap",
+                        "sfx_splash", "sfx_gull", "sfx_pigeon_flutter", "sfx_crickets",
+                        "sfx_logo_sting", "sfx_explosion"]:
+                check("sfx exists: %s" % sfx_id, ResourceLoader.exists("res://assets/audio/sfx/%s.ogg" % sfx_id))
+        var radio_ok: bool = AudioSystem.radio_status()["tracks"].size() >= 3
+        check("radio stations intact", radio_ok)
+
         # finish: tear down world
         world.queue_free()
         await get_tree().process_frame

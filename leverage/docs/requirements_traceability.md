@@ -10,7 +10,7 @@ Directive requirement → implementation → status. Status values: Implemented 
 | R4 | Environment investigation FIRST | development_state.md §Environment facts | **Verified** |
 | R5 | Official docs research before tech decisions | technical_decision_log.md | **Verified** |
 | R6 | Asset research + licences | asset_register.md; Quaternius/UAL CC0; motorcycle authored in-project | **Verified** |
-| R7 | D'YOUNGS GAMES → title → notice → menu → cinematic → tutorialized entry | boot.gd + intro_cinematic.gd + world tutorial | **Tested** (boot.flow, intro.cinematic suites; renders 01–05) |
+| R7 | DE YOUNG GAMES → title → notice → menu → cinematic → tutorialized entry | boot.gd + intro_cinematic.gd + world tutorial | **Tested** (boot.flow, intro.cinematic suites; renders 01–05) |
 | R8 | 5 combat disciplines distinct with animations | combat/disciplines.gd + UAL library anims | **Tested** (34-check combat.disciplines suite incl. anim-library existence) |
 | R9 | X=Punch, Y=Heavy, A=Kick, B=Dodge fixed | input_router.gd; control_map.md | **Tested** (ui.touch fixed-mapping checks) |
 | R10 | Touch controls matching authoritative map | touch_controls.gd emits canonical actions | **Tested** (ui.touch suite) |

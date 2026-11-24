@@ -103,7 +103,7 @@ func _add_menu_buttons() -> void:
         var cr := LvgTheme.make_button("CREDITS")
         cr.pressed.connect(func(): _show_credits())
         _v.add_child(cr)
-        var ver := LvgTheme.make_label("v2.4.0  |  D'YOUNGS GAMES  |  Mobile renderer, XOGOT-ready", 20, LvgTheme.TEXT_DIM)
+        var ver := LvgTheme.make_label("v2.5.0  |  DE YOUNG GAMES  |  Mobile renderer, XOGOT-ready", 20, LvgTheme.TEXT_DIM)
         _v.add_child(ver)
 
 
@@ -199,9 +199,9 @@ func _show_credits() -> void:
         var lines := [
                 "LEVERAGE - Everyone has leverage on you.",
                 "",
-                "A D'YOUNGS GAMES production",
+                "A DE YOUNG GAMES production",
                 "",
-                "Design, code, writing: D'Youngs Games",
+                "Design, code, writing: DE YOUNG GAMES",
                 "Character animation: Quaternius Universal Animation Library (CC0)",
                 "City kits, vehicles, weapons: Quaternius packs (CC0)",
                 "Fonts: Lilita One, Liberation Sans (OFL)",

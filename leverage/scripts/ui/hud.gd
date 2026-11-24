@@ -133,8 +133,10 @@ func _build_minimap() -> Control:
                         var a: Vector2 = (road["a"] - p2) * scale_f
                         var b: Vector2 = (road["b"] - p2) * scale_f
                         draw.draw_line(Vector2(115, 115) + Vector2(a.y, a.x), Vector2(115, 115) + Vector2(b.y, b.x), Color(0.28, 0.29, 0.34), 3.0)
-                # area bounds
-                for area_id in CityDirector.AREAS.keys():
+                # current area tint only (v2.5: full-tint overlay read as noise)
+                for area_id in ([CityDirector.current_area] if CityDirector.current_area != "" else []):
+                        if not CityDirector.AREAS.has(area_id):
+                                continue
                         var r: Rect2 = CityDirector.AREAS[area_id]["bounds"]
                         var tl2 := Vector2(115, 115) + Vector2((r.position - p2).y, (r.position - p2).x) * scale_f
                         draw.draw_rect(Rect2(tl2, r.size * scale_f), Color(CityDirector.AREAS[area_id]["color"].r, CityDirector.AREAS[area_id]["color"].g, CityDirector.AREAS[area_id]["color"].b, 0.18))
